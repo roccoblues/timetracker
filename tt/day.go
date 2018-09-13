@@ -36,7 +36,7 @@ func (d *day) StartEntry(t time.Time) error {
 	return nil
 }
 
-func (d *day) StopEntry(t time.Time) error {
+func (d *day) EndEntry(t time.Time) error {
 	if len(d.Entries) == 0 {
 		return errors.New("not started")
 	}
@@ -49,23 +49,6 @@ func (d *day) StopEntry(t time.Time) error {
 
 	e.End = t
 	return nil
-}
-
-func (d *day) AddTime(t time.Time) {
-	if len(d.Entries) == 0 {
-		d.Entries = append(d.Entries, &entry{Start: t})
-		return
-	}
-
-	e := d.Entries[len(d.Entries)-1]
-
-	if e.Start.IsZero() {
-		e.Start = t
-	} else if e.End.IsZero() {
-		e.End = t
-	} else {
-		d.Entries = append(d.Entries, &entry{Start: t})
-	}
 }
 
 func (d *day) Time() time.Duration {

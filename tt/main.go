@@ -10,7 +10,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const dbFile = ".tt.json"
+const jsonfile = ".tt.json"
 const roundTo = 15 * time.Minute
 
 func main() {
@@ -20,21 +20,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	dbPath := filepath.Join(home, dbFile)
+	path := filepath.Join(home, jsonfile)
 
-	db := newDB(dbPath)
+	db := newJSONFile(path)
+	tracker := newTracker(db)
 
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
 		switch cmd {
 		case "start":
-			err := db.AddStart(time.Now())
+			err := tracker.Start(time.Now())
 			if err != nil {
 				fmt.Printf("Failed to add start time: %v\n", err)
 				os.Exit(1)
 			}
 		case "stop":
-			err := db.AddStop(time.Now())
+			err := tracker.End(time.Now())
 			if err != nil {
 				fmt.Printf("Failed to add stop time: %v\n", err)
 				os.Exit(1)
@@ -45,7 +46,7 @@ func main() {
 		}
 	}
 
-	days, err := db.All()
+	days, err := tracker.All()
 	if err != nil {
 		fmt.Printf("Failed to get all entries: %v\n", err)
 		os.Exit(1)
