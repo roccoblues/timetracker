@@ -1,40 +1,99 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 	"time"
-
-	"github.com/google/go-cmp/cmp"
 )
 
-func Test_day_addStartTime(t *testing.T) {
-	testTime, err := time.Parse("2006-01-02 15:04", "2018-09-11 13:40")
-	if err != nil {
-		t.Fatal(err)
-	}
+func Test_newDay(t *testing.T) {
+	testTime := time.Now()
 
 	tests := []struct {
-		name    string
-		day     day
-		time    time.Time
-		wantErr bool
-		times   []time.Time
+		name string
+		t    time.Time
+		want *day
 	}{
 		{
-			name:    "empty",
-			day:     day{},
-			time:    testTime,
-			wantErr: false,
-			times:   []time.Time{testTime},
+			name: "returns valid day",
+			t:    testTime,
+			want: &day{Date: testTime, Entries: []*entry{&entry{Start: testTime}}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.day.addStartTime(tt.time); (err != nil) != tt.wantErr {
-				t.Errorf("day.addStartTime() error = %v, wantErr %v", err, tt.wantErr)
+			if got := newDay(tt.t); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("newDay() = %v, want %v", got, tt.want)
 			}
-			if diff := cmp.Diff(tt.day.times, tt.times); diff != "" {
-				t.Errorf("day.addStartTime() differ: (-want +got)\n%s", diff)
+		})
+	}
+}
+
+func Test_day_Time(t *testing.T) {
+	testTime := time.Now()
+
+	tests := []struct {
+		name    string
+		Entries []*entry
+		want    time.Duration
+	}{
+		{
+			name:    "empty",
+			Entries: []*entry{},
+			want:    0,
+		},
+		{
+			name: "only start",
+			Entries: []*entry{
+				&entry{
+					Start: testTime.Add(time.Hour * -5),
+				},
+			},
+			want: 0,
+		},
+		{
+			name: "one entry",
+			Entries: []*entry{
+				&entry{
+					Start: testTime.Add(time.Hour * -5),
+					End:   testTime,
+				},
+			},
+			want: time.Duration(5) * time.Hour,
+		},
+		{
+			name: "one entry and trailing start",
+			Entries: []*entry{
+				&entry{
+					Start: testTime.Add(time.Hour * -5),
+					End:   testTime.Add(time.Hour * -2),
+				},
+				&entry{
+					Start: testTime.Add(time.Hour * -1),
+				},
+			},
+			want: time.Duration(3) * time.Hour,
+		},
+		{
+			name: "two entries",
+			Entries: []*entry{
+				&entry{
+					Start: testTime.Add(time.Hour * -5),
+					End:   testTime.Add(time.Hour * -2),
+				},
+				&entry{
+					Start: testTime.Add(time.Hour * -1),
+					End:   testTime,
+				},
+			},
+			want: time.Duration(4) * time.Hour,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			d := &day{Entries: tt.Entries}
+			if got := d.Time(); got != tt.want {
+				t.Errorf("day.Time() = %v, want %v", got, tt.want)
 			}
 		})
 	}

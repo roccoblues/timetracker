@@ -45,7 +45,7 @@ func (j *jsonFile) Write(times []time.Time) error {
 	}
 
 	if err := ioutil.WriteFile(j.path, json, 0644); err != nil {
-		return errors.Wrapf(err, "failed to write to '%s'", j.path, err)
+		return errors.Wrapf(err, "failed to write to '%s'", j.path)
 	}
 
 	return nil
