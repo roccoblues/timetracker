@@ -7,8 +7,8 @@ import (
 )
 
 type persistence interface {
-	Read() ([]*day, error)
-	Write([]*day) error
+	Read() ([]time.Time, error)
+	Write([]time.Time) error
 }
 
 type tracker struct {
@@ -20,24 +20,18 @@ func newTracker(db persistence) *tracker {
 }
 
 func (t *tracker) Start(start time.Time) error {
-	days, err := t.db.Read()
+	times, err := t.db.Read()
 	if err != nil {
 		return errors.Wrap(err, "read failed")
 	}
 
-	day := days[len(days)-1]
-
-	if day == nil || !sameDay(day.Date, start) {
-		day = newDay(start)
-		days = append(days, day)
+	if len(times)%2 != 0 {
+		return errors.New("already started")
 	}
 
-	err = day.StartEntry(start)
-	if err != nil {
-		return errors.Wrap(err, "adding start time to day failed")
-	}
+	times = append(times, start)
 
-	err = t.db.Write(days)
+	err = t.db.Write(times)
 	if err != nil {
 		return errors.Wrap(err, "write failed")
 	}
@@ -46,18 +40,18 @@ func (t *tracker) Start(start time.Time) error {
 }
 
 func (t *tracker) End(end time.Time) error {
-	days, err := t.db.Read()
+	times, err := t.db.Read()
 	if err != nil {
 		return errors.Wrap(err, "read failed")
 	}
 
-	day := days[len(days)-1]
-
-	if err := day.EndEntry(end); err != nil {
-		return errors.Wrap(err, "adding stop time to day failed")
+	if len(times)%2 == 0 {
+		return errors.New("not started")
 	}
 
-	err = t.db.Write(days)
+	times = append(times, end)
+
+	err = t.db.Write(times)
 	if err != nil {
 		return errors.Wrap(err, "write failed")
 	}
@@ -65,8 +59,33 @@ func (t *tracker) End(end time.Time) error {
 	return nil
 }
 
-func (t *tracker) All() ([]*day, error) {
-	return t.db.Read()
+func (t *tracker) Days() ([]*day, error) {
+	times, err := t.db.Read()
+	if err != nil {
+		return nil, errors.Wrap(err, "read failed")
+	}
+
+	days := []*day{}
+	for _, t := range times {
+		if len(days) == 0 {
+			days = append(days, newDay(t))
+			continue
+		}
+
+		day := days[len(days)-1]
+		if !sameDay(day.Date, t) {
+			days = append(days, newDay(t))
+			continue
+		}
+
+		last := day.Entries[len(day.Entries)-1]
+		if last.End.IsZero() {
+			last.End = t
+		} else {
+			day.Entries = append(day.Entries, &entry{Start: t})
+		}
+	}
+	return days, nil
 }
 
 func sameDay(a, b time.Time) bool {

@@ -20,7 +20,7 @@ func newJSONFile(path string) *jsonFile {
 	return &jsonFile{path: path}
 }
 
-func (j *jsonFile) Read() ([]*day, error) {
+func (j *jsonFile) Read() ([]time.Time, error) {
 	json := []byte(emptyJSON)
 
 	if _, err := os.Stat(j.path); err == nil {
@@ -30,16 +30,16 @@ func (j *jsonFile) Read() ([]*day, error) {
 		}
 	}
 
-	days, err := decode(json)
+	times, err := decode(json)
 	if err != nil {
 		return nil, errors.Wrap(err, "decode failed")
 	}
 
-	return days, nil
+	return times, nil
 }
 
-func (j *jsonFile) Write(days []*day) error {
-	json, err := encode(days)
+func (j *jsonFile) Write(times []time.Time) error {
+	json, err := encode(times)
 	if err != nil {
 		return errors.Wrap(err, "encode failed")
 	}
@@ -51,7 +51,7 @@ func (j *jsonFile) Write(days []*day) error {
 	return nil
 }
 
-func decode(input []byte) ([]*day, error) {
+func decode(input []byte) ([]time.Time, error) {
 	var data map[string][]string
 	if err := json.Unmarshal(input, &data); err != nil {
 		return nil, errors.Wrap(err, "json decode failed")
@@ -63,42 +63,30 @@ func decode(input []byte) ([]*day, error) {
 	}
 	sort.Strings(dates)
 
-	days := []*day{}
+	times := []time.Time{}
 	for _, d := range dates {
-		date, err := time.Parse("2006-01-02", d)
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse date %s", d)
-		}
-
-		day := newDay(date)
-
-		for i, e := range data[d] {
-			t, err := time.Parse("2006-01-02 15:04", d+" "+e)
+		for _, e := range data[d] {
+			timeString := d + " " + e
+			t, err := time.Parse("2006-01-02 15:04", timeString)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to parse time %s", e)
+				return nil, errors.Wrapf(err, "failed to parse entry %s", timeString)
 			}
-			if i%2 == 0 {
-				day.StartEntry(t)
-			} else {
-				day.EndEntry(t)
-			}
+			times = append(times, t)
 		}
-
-		days = append(days, day)
 	}
 
-	return days, nil
+	return times, nil
 }
 
-func encode(days []*day) ([]byte, error) {
+func encode(times []time.Time) ([]byte, error) {
 	data := map[string][]string{}
 
-	for _, day := range days {
-		times := []string{}
-		for _, e := range day.Entries {
-			times = append(times, e.Start.Format("15:04"), e.End.Format("15:04"))
+	for _, t := range times {
+		date := t.Format("2006-01-02")
+		if _, exists := data[date]; !exists {
+			data[date] = []string{}
 		}
-		data[day.Date.Format("2006-01-02")] = times
+		data[date] = append(data[date], t.Format("15:04"))
 	}
 
 	encoded, err := json.MarshalIndent(&data, "", "  ")

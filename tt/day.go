@@ -2,8 +2,6 @@ package main
 
 import (
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type day struct {
@@ -17,38 +15,7 @@ type entry struct {
 }
 
 func newDay(t time.Time) *day {
-	return &day{Date: t}
-}
-
-func (d *day) StartEntry(t time.Time) error {
-	if len(d.Entries) == 0 {
-		d.Entries = append(d.Entries, &entry{Start: t})
-		return nil
-	}
-
-	e := d.Entries[len(d.Entries)-1]
-
-	if !e.Start.IsZero() && e.End.IsZero() {
-		return errors.New("already started")
-	}
-
-	d.Entries = append(d.Entries, &entry{Start: t})
-	return nil
-}
-
-func (d *day) EndEntry(t time.Time) error {
-	if len(d.Entries) == 0 {
-		return errors.New("not started")
-	}
-
-	e := d.Entries[len(d.Entries)-1]
-
-	if !e.End.IsZero() {
-		return errors.New("not started")
-	}
-
-	e.End = t
-	return nil
+	return &day{Date: t, Entries: []*entry{&entry{Start: t}}}
 }
 
 func (d *day) Time() time.Duration {

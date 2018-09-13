@@ -46,9 +46,9 @@ func main() {
 		}
 	}
 
-	days, err := tracker.All()
+	days, err := tracker.Days()
 	if err != nil {
-		fmt.Printf("Failed to get all entries: %v\n", err)
+		fmt.Printf("Failed to get days: %v\n", err)
 		os.Exit(1)
 	}
 
