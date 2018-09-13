@@ -2,23 +2,75 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
+	"io/ioutil"
+	"os"
 	"sort"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
+const emptyJSON = "{}"
+
 type db struct {
-	days     []*day
-	Modified bool
+	Path string
 }
 
-func (db *db) decode(input []byte) error {
+func newDB(path string) *db {
+	return &db{Path: path}
+}
+
+func (db *db) AddStart(t time.Time) error {
+	days, err := read(db.Path)
+	if err != nil {
+		return errors.Wrap(err, "read failed")
+	}
+
+	days, err = addStart(days, t)
+	if err != nil {
+		return errors.Wrap(err, "failed to add start time")
+	}
+
+	err = write(days, db.Path)
+	if err != nil {
+		return errors.Wrap(err, "write failed")
+	}
+
+	return nil
+}
+
+func (db *db) AddStop(t time.Time) error {
+	days, err := read(db.Path)
+	if err != nil {
+		return errors.Wrap(err, "read failed")
+	}
+
+	days, err = addStop(days, t)
+	if err != nil {
+		return errors.Wrap(err, "failed to add stop time")
+	}
+
+	err = write(days, db.Path)
+	if err != nil {
+		return errors.Wrap(err, "write failed")
+	}
+
+	return nil
+}
+
+func (db *db) All() ([]*day, error) {
+	days, err := read(db.Path)
+	if err != nil {
+		return nil, errors.Wrap(err, "read failed")
+	}
+
+	return days, nil
+}
+
+func decode(input []byte) ([]*day, error) {
 	var data map[string][]string
 	if err := json.Unmarshal(input, &data); err != nil {
-		return errors.Wrap(err, "json decode failed")
+		return nil, errors.Wrap(err, "json decode failed")
 	}
 
 	dates := make([]string, 0, len(data))
@@ -31,35 +83,34 @@ func (db *db) decode(input []byte) error {
 	for _, d := range dates {
 		date, err := time.Parse("2006-01-02", d)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse date %s", d)
+			return nil, errors.Wrapf(err, "failed to parse date %s", d)
 		}
 
-		times := []time.Time{}
+		day := newDay(date)
+
 		for _, e := range data[d] {
 			t, err := time.Parse("2006-01-02 15:04", d+" "+e)
 			if err != nil {
-				return errors.Wrapf(err, "failed to parse time %s", e)
+				return nil, errors.Wrapf(err, "failed to parse time %s", e)
 			}
-			times = append(times, t)
+			day.AddTime(t)
 		}
 
-		days = append(days, &day{date: date, times: times})
+		days = append(days, day)
 	}
 
-	db.days = days
-
-	return nil
+	return days, nil
 }
 
-func (db *db) encode() ([]byte, error) {
+func encode(days []*day) ([]byte, error) {
 	data := map[string][]string{}
 
-	for _, day := range db.days {
+	for _, day := range days {
 		times := []string{}
-		for _, t := range day.times {
-			times = append(times, t.Format("15:04"))
+		for _, e := range day.Entries {
+			times = append(times, e.Start.Format("15:04"), e.End.Format("15:04"))
 		}
-		data[day.date.Format("2006-01-02")] = times
+		data[day.Date.Format("2006-01-02")] = times
 	}
 
 	encoded, err := json.MarshalIndent(&data, "", "  ")
@@ -70,72 +121,63 @@ func (db *db) encode() ([]byte, error) {
 	return encoded, nil
 }
 
-func (db *db) print(out io.Writer) {
-	var week int
-	for _, day := range db.days {
-		_, w := day.date.ISOWeek()
-		if week > 0 && week != w {
-			fmt.Fprintln(out, "")
-		}
-		week = w
+func read(path string) ([]*day, error) {
+	json := []byte(emptyJSON)
 
-		fmt.Fprintf(out, "%s  %.2f  ", day.date.Format("02.01.2006"), worked(day.times).Round(roundTo).Hours())
-
-		for i, t := range day.times {
-			fmt.Fprintf(out, "%s", t.Round(roundTo).Format("15:04"))
-			if i%2 == 0 {
-				fmt.Fprint(out, "-")
-			} else {
-				fmt.Fprint(out, " ")
-			}
-			if i == len(day.times)-1 {
-				fmt.Fprintln(out, "")
-			}
+	if _, err := os.Stat(path); err == nil {
+		json, err = ioutil.ReadFile(path)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to read file '%s'", path)
 		}
 	}
+
+	days, err := decode(json)
+	if err != nil {
+		return nil, errors.Wrap(err, "decode failed")
+	}
+
+	return days, nil
 }
 
-func (db *db) addStartTime(t time.Time) error {
-	for _, d := range db.days {
-		if sameDay(d.date, t) {
-			if err := d.addStartTime(t); err != nil {
-				return err
-			}
-			db.Modified = true
-		}
+func write(days []*day, path string) error {
+	json, err := encode(days)
+	if err != nil {
+		return errors.Wrap(err, "encode failed")
 	}
 
-	db.days = append(db.days, &day{date: t, times: []time.Time{t}})
-	db.Modified = true
+	if err := ioutil.WriteFile(path, json, 0644); err != nil {
+		return errors.Wrapf(err, "failed to write to '%s'", path, err)
+	}
 
 	return nil
 }
 
-func (db *db) addStopTime(t time.Time) error {
-	for _, d := range db.days {
-		if sameDay(d.date, t) {
-			return d.addStopTime(t)
-		}
+func addStart(days []*day, t time.Time) ([]*day, error) {
+	day := days[len(days)-1]
+
+	if day == nil || !sameDay(day.Date, t) {
+		day = newDay(t)
+		days = append(days, day)
 	}
 
-	return errors.New("not started")
+	err := day.StartEntry(t)
+	if err != nil {
+		return nil, errors.Wrap(err, "adding start time to day failed")
+	}
+
+	return days, nil
+}
+
+func addStop(days []*day, t time.Time) ([]*day, error) {
+	day := days[len(days)-1]
+
+	if err := day.StopEntry(t); err != nil {
+		return nil, errors.Wrap(err, "adding stop time to day failed")
+	}
+
+	return days, nil
 }
 
 func sameDay(a, b time.Time) bool {
 	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
-}
-
-func worked(times []time.Time) time.Duration {
-	var worked time.Duration
-	var start time.Time
-
-	for i, t := range times {
-		if i%2 == 0 {
-			start = t
-		} else {
-			worked += t.Sub(start)
-		}
-	}
-
-	return worked
 }

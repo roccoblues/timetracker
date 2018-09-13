@@ -1,45 +1,42 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
 
-const dbFile = "tt.json"
+const dbFile = ".tt.json"
 const roundTo = 15 * time.Minute
 
 func main() {
-	db := db{}
-
-	if _, err := os.Stat(dbFile); err == nil {
-		data, err := ioutil.ReadFile(dbFile)
-		if err != nil {
-			fmt.Printf("Failed to read file '%s': %v\n", dbFile, err)
-			os.Exit(1)
-		}
-
-		err = db.decode(data)
-		if err != nil {
-			fmt.Printf("Failed to decode: %v\n", err)
-			os.Exit(1)
-		}
+	home, err := homedir.Dir()
+	if err != nil {
+		fmt.Printf("Failed to find home directory: %v\n", err)
+		os.Exit(1)
 	}
+
+	dbPath := filepath.Join(home, dbFile)
+
+	db := newDB(dbPath)
 
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
 		switch cmd {
 		case "start":
-			err := db.addStartTime(time.Now())
+			err := db.AddStart(time.Now())
 			if err != nil {
-				fmt.Printf("Failed to start timer: %v\n", err)
+				fmt.Printf("Failed to add start time: %v\n", err)
 				os.Exit(1)
 			}
 		case "stop":
-			err := db.addStopTime(time.Now())
+			err := db.AddStop(time.Now())
 			if err != nil {
-				fmt.Printf("Failed to stop timer: %v\n", err)
+				fmt.Printf("Failed to add stop time: %v\n", err)
 				os.Exit(1)
 			}
 		default:
@@ -48,19 +45,41 @@ func main() {
 		}
 	}
 
-	if db.Modified {
-		data, err := db.encode()
-		if err != nil {
-			fmt.Printf("Failed to encode: %v\n", err)
-			os.Exit(1)
-		}
+	days, err := db.All()
+	if err != nil {
+		fmt.Printf("Failed to get all entries: %v\n", err)
+		os.Exit(1)
+	}
 
-		err = ioutil.WriteFile(dbFile, data, 0644)
-		if err != nil {
-			fmt.Printf("Failed to write file '%s': %v\n", dbFile, err)
-			os.Exit(1)
+	fmt.Print(format(days))
+}
+
+func format(days []*day) string {
+	var b bytes.Buffer
+	var week int
+	for _, day := range days {
+		_, w := day.Date.ISOWeek()
+		if week > 0 && week != w {
+			b.WriteString("\n")
+		}
+		week = w
+
+		b.WriteString(fmt.Sprintf("%s  %.2f  ", day.Date.Format("02.01.2006"), day.Time().Round(roundTo).Hours()))
+
+		for i, e := range day.Entries {
+			start := e.Start.Round(roundTo).Format("15:04")
+			if e.End.IsZero() {
+				b.WriteString(fmt.Sprintf("%s-", start))
+			} else {
+				end := e.End.Round(roundTo).Format("15:04")
+				b.WriteString(fmt.Sprintf("%s-%s ", start, end))
+			}
+
+			if i == len(day.Entries)-1 {
+				b.WriteString("\n")
+			}
 		}
 	}
 
-	db.print(os.Stdout)
+	return b.String()
 }
