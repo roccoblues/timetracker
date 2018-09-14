@@ -5,7 +5,7 @@ Command line time tracker. Times are rounded to 15 minutes.
 ## Installation
 
 ```
-go get github.com/roccoblues/timetracker/tt
+go get github.com/roccoblues/tt
 ```
 
 ## Usage
