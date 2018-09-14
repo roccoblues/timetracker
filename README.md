@@ -1,4 +1,4 @@
-# timetracker
+# tt
 
 Command line time tracker. Times are rounded to 15 minutes.
 
