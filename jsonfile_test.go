@@ -1,6 +1,9 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -245,6 +248,43 @@ func Test_encode_decode(t *testing.T) {
 			}
 			if string(got) != tt.json {
 				t.Errorf("encode(decode(%s)) = %s", tt.json, got)
+			}
+		})
+	}
+}
+
+func Test_jsonFile_Read(t *testing.T) {
+	dir, err := ioutil.TempDir("", "jsonfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	nonExistingFile := filepath.Join(dir, "test")
+
+	tests := []struct {
+		name    string
+		path    string
+		want    []time.Time
+		wantErr bool
+	}{
+		{
+			name:    "file doesn't exist",
+			path:    nonExistingFile,
+			want:    []time.Time{},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			j := newJSONFile(tt.path)
+			got, err := j.Read()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("jsonFile.Read() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("jsonFile.Read() = %v, want %v", got, tt.want)
 			}
 		})
 	}
