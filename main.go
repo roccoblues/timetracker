@@ -16,7 +16,7 @@ const roundTo = 15 * time.Minute
 func main() {
 	home, err := homedir.Dir()
 	if err != nil {
-		fmt.Printf("Failed to find home directory: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to find home directory: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -31,24 +31,24 @@ func main() {
 		case "start":
 			err := tracker.Start(time.Now())
 			if err != nil {
-				fmt.Printf("Failed to add start time: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Failed to add start time: %v\n", err)
 				os.Exit(1)
 			}
 		case "stop":
 			err := tracker.End(time.Now())
 			if err != nil {
-				fmt.Printf("Failed to add stop time: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Failed to add stop time: %v\n", err)
 				os.Exit(1)
 			}
 		default:
-			fmt.Printf("Unknown command: %s\n", cmd)
+			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
 			os.Exit(1)
 		}
 	}
 
 	days, err := tracker.Days()
 	if err != nil {
-		fmt.Printf("Failed to get days: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to get days: %v\n", err)
 		os.Exit(1)
 	}
 
