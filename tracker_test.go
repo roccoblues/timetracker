@@ -5,57 +5,175 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
+	"github.com/roccoblues/tt/test"
 )
 
-type testStorage struct {
-	times      []time.Time
-	readError  bool
-	writeError bool
+type testRepo struct {
+	data     []byte
+	readErr  bool
+	writeErr bool
 }
 
-func (s *testStorage) Read() ([]time.Time, error) {
-	if s.readError {
-		return nil, errors.New("")
+func (r *testRepo) Read() ([]byte, error) {
+	if r.readErr {
+		return nil, errors.New("read failed")
 	}
-	return s.times, nil
+	return r.data, nil
 }
-func (s *testStorage) Write(times []time.Time) error {
-	if s.writeError {
-		return errors.New("")
+
+func (r *testRepo) Write(d []byte) error {
+	if r.writeErr {
+		return errors.New("write failed")
 	}
-	s.times = times
+	r.data = d
 	return nil
 }
 
 func Test_newTracker(t *testing.T) {
-	storage := &testStorage{}
-
 	tests := []struct {
-		name  string
-		input persistence
-		want  *tracker
+		name    string
+		repo    repository
+		want    []*day
+		wantErr bool
 	}{
 		{
-			name:  "returns a valid tracker",
-			input: storage,
-			want:  &tracker{db: storage},
+			name:    "empty",
+			repo:    &testRepo{},
+			want:    []*day{},
+			wantErr: false,
+		},
+		{
+			name:    "load error",
+			repo:    &testRepo{readErr: true},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "invalid json",
+			repo:    &testRepo{data: []byte(test.InvalidJSON)},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "invalid date",
+			repo:    &testRepo{data: []byte(test.InvalidDateJSON)},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "invalid time",
+			repo:    &testRepo{data: []byte(test.InvalidTimeJSON)},
+			want:    nil,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := newTracker(tt.input); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("newTracker() = %v, want %v", got, tt.want)
+			tracker, err := newTracker(tt.repo)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("newTracker() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				days := tracker.Days()
+				if !reflect.DeepEqual(days, tt.want) {
+					t.Errorf("newTracker() = %v, want %v", days, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func Test_tracker_Days(t *testing.T) {
+	tests := []struct {
+		name string
+		json string
+		want []*day
+	}{
+		{
+			name: "empty json",
+			json: test.EmptyJSON,
+			want: []*day{},
+		},
+		{
+			name: "empty day",
+			json: test.EmptyDayJSON,
+			want: []*day{},
+		},
+		{
+			name: "one day only start",
+			json: test.OneDayOnlyStartJSON,
+			want: []*day{
+				&day{
+					Date: test.Time(t, "2018-09-01 10:00"),
+					Entries: []*entry{
+						&entry{Start: test.Time(t, "2018-09-01 10:00")},
+					},
+				},
+			},
+		},
+		{
+			name: "one day start/end",
+			json: test.OneDayStartEndJSON,
+			want: []*day{
+				&day{
+					Date: test.Time(t, "2018-09-01 10:00"),
+					Entries: []*entry{
+						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
+					},
+				},
+			},
+		},
+		{
+			name: "one day start/end start",
+			json: test.OneDayStartEndStartJSON,
+			want: []*day{
+				&day{
+					Date: test.Time(t, "2018-09-01 10:00"),
+					Entries: []*entry{
+						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
+						&entry{Start: test.Time(t, "2018-09-01 13:00")},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple days",
+			json: test.MultipleDaysJSON,
+			want: []*day{
+				&day{
+					Date: test.Time(t, "2018-09-01 10:00"),
+					Entries: []*entry{
+						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
+					},
+				},
+				&day{
+					Date: test.Time(t, "2018-09-02 08:00"),
+					Entries: []*entry{
+						&entry{Start: test.Time(t, "2018-09-02 08:00")},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tr, err := newTracker(&testRepo{data: []byte(tt.json)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			days := tr.Days()
+			if diff := cmp.Diff(tt.want, days); diff != "" {
+				t.Errorf("tracker.Days() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}
 }
 
 func Test_sameDay(t *testing.T) {
-	testTime, err := time.Parse("2006-01-02 15:04", "2018-09-11 13:40")
-	if err != nil {
-		t.Fatal(err)
-	}
+	testTime := test.Time(t, "2018-09-01 10:00")
 
 	tests := []struct {
 		name string
@@ -87,169 +205,105 @@ func Test_sameDay(t *testing.T) {
 }
 
 func Test_tracker_Start(t *testing.T) {
-	start := time.Now()
-
 	tests := []struct {
-		name           string
-		start          time.Time
-		initialStorage persistence
-		wantStorage    persistence
-		wantErr        bool
+		name    string
+		before  string
+		start   time.Time
+		after   string
+		wantErr bool
 	}{
 		{
-			name:           "works",
-			start:          start,
-			initialStorage: &testStorage{},
-			wantStorage:    &testStorage{times: []time.Time{start}},
-			wantErr:        false,
+			name:    "first entry",
+			before:  test.EmptyJSON,
+			after:   test.OneDayOnlyStartJSON,
+			start:   test.Time(t, "2018-09-01 10:00"),
+			wantErr: false,
 		},
 		{
-			name:           "already started",
-			start:          start,
-			initialStorage: &testStorage{times: []time.Time{start.Add(time.Hour * -1)}},
-			wantStorage:    &testStorage{times: []time.Time{start.Add(time.Hour * -1)}},
-			wantErr:        true,
+			name:    "second entry",
+			before:  test.OneDayStartEndJSON,
+			after:   test.OneDayStartEndStartJSON,
+			start:   test.Time(t, "2018-09-01 13:00"),
+			wantErr: false,
 		},
 		{
-			name:           "read failed",
-			start:          start,
-			initialStorage: &testStorage{readError: true},
-			wantStorage:    &testStorage{readError: true},
-			wantErr:        true,
+			name:    "new day",
+			before:  test.OneDayStartEndJSON,
+			after:   test.MultipleDaysJSON,
+			start:   test.Time(t, "2018-09-02 08:00"),
+			wantErr: false,
 		},
 		{
-			name:           "write failed",
-			start:          start,
-			initialStorage: &testStorage{writeError: true},
-			wantStorage:    &testStorage{writeError: true},
-			wantErr:        true,
+			name:    "already started",
+			before:  test.OneDayOnlyStartJSON,
+			after:   test.OneDayOnlyStartJSON,
+			start:   test.Time(t, "2018-09-01 16:00"),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tracker := newTracker(tt.initialStorage)
-			if err := tracker.Start(tt.start); (err != nil) != tt.wantErr {
-				t.Errorf("tracker.Start() error = %v, wantErr %v", err, tt.wantErr)
+			repo := &testRepo{data: []byte(tt.before)}
+			tr, err := newTracker(repo)
+			if err != nil {
+				t.Fatal(err)
 			}
-			if !reflect.DeepEqual(tracker.db, tt.wantStorage) {
-				t.Errorf("encode() = %s, want %s", tracker.db, tt.wantStorage)
+			err = tr.Start(tt.start)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("tracker.Start() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(tt.after, string(repo.data)); diff != "" {
+				t.Errorf("tracker.Start() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}
 }
 
 func Test_tracker_End(t *testing.T) {
-	start := time.Now().Add(time.Hour * -7)
-	end := time.Now()
-
-	tests := []struct {
-		name           string
-		end            time.Time
-		initialStorage persistence
-		wantStorage    persistence
-		wantErr        bool
-	}{
-		{
-			name:           "works",
-			end:            end,
-			initialStorage: &testStorage{times: []time.Time{start}},
-			wantStorage:    &testStorage{times: []time.Time{start, end}},
-			wantErr:        false,
-		},
-		{
-			name:           "not",
-			end:            end,
-			initialStorage: &testStorage{},
-			wantStorage:    &testStorage{},
-			wantErr:        true,
-		},
-		{
-			name:           "read failed",
-			end:            end,
-			initialStorage: &testStorage{readError: true},
-			wantStorage:    &testStorage{readError: true},
-			wantErr:        true,
-		},
-		{
-			name:           "write failed",
-			end:            end,
-			initialStorage: &testStorage{times: []time.Time{start}, writeError: true},
-			wantStorage:    &testStorage{times: []time.Time{start}, writeError: true},
-			wantErr:        true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tracker := newTracker(tt.initialStorage)
-			if err := tracker.End(tt.end); (err != nil) != tt.wantErr {
-				t.Errorf("tracker.Start() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(tracker.db, tt.wantStorage) {
-				t.Errorf("encode() = %s, want %s", tracker.db, tt.wantStorage)
-			}
-		})
-	}
-}
-
-func Test_tracker_Days(t *testing.T) {
-	testTime1, err := time.Parse("2006-01-02 15:04", "2018-09-01 10:00")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testTime2 := testTime1.Add(time.Hour * 2)
-	testTime3 := testTime1.Add(time.Hour * 4)
-	testTime4 := testTime1.Add(time.Hour * 24)
-
 	tests := []struct {
 		name    string
-		storage persistence
-		want    []*day
+		before  string
+		end     time.Time
+		after   string
 		wantErr bool
 	}{
 		{
-			name:    "read failed",
-			storage: &testStorage{readError: true},
-			want:    nil,
-			wantErr: true,
+			name:    "end first entry",
+			before:  test.OneDayOnlyStartJSON,
+			after:   test.OneDayStartEndJSON,
+			end:     test.Time(t, "2018-09-01 12:00"),
+			wantErr: false,
 		},
 		{
-			name:    "works",
-			storage: &testStorage{times: []time.Time{testTime1, testTime2, testTime3, testTime4}},
-			want: []*day{
-				&day{
-					Date: testTime1,
-					Entries: []*entry{
-						&entry{
-							Start: testTime1,
-							End:   testTime2,
-						},
-						&entry{
-							Start: testTime3,
-						},
-					},
-				},
-				&day{
-					Date: testTime4,
-					Entries: []*entry{
-						&entry{
-							Start: testTime4,
-						},
-					},
-				},
-			},
+			name:    "end second day",
+			before:  test.MultipleDaysJSON,
+			after:   test.MultipleDaysEndJSON,
+			end:     test.Time(t, "2018-09-02 16:00"),
 			wantErr: false,
+		},
+		{
+			name:    "not started",
+			before:  test.EmptyJSON,
+			after:   test.EmptyJSON,
+			end:     test.Time(t, "2018-09-01 16:00"),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tracker := newTracker(tt.storage)
-			got, err := tracker.Days()
+			repo := &testRepo{data: []byte(tt.before)}
+			tr, err := newTracker(repo)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = tr.End(tt.end)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("tracker.Days() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("tracker.End() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("tracker.Days() = %v, want %v", got, tt.want)
+			if diff := cmp.Diff(tt.after, string(repo.data)); diff != "" {
+				t.Errorf("tracker.End() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}

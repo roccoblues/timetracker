@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func Test_format(t *testing.T) {
+func Test_formatDays(t *testing.T) {
 	testTime1, err := time.Parse("2006-01-02 15:04", "2018-09-01 10:00")
 	if err != nil {
 		t.Fatal(err)
@@ -59,7 +59,7 @@ func Test_format(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := format(tt.days); got != tt.want {
+			if got := formatDays(tt.days); got != tt.want {
 				t.Errorf("format() = %v, want %v", got, tt.want)
 			}
 		})

@@ -1,72 +1,70 @@
 package main
 
 import (
+	"encoding/json"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
-type persistence interface {
-	Read() ([]time.Time, error)
-	Write([]time.Time) error
+const timeZone = "Europe/Berlin"
+
+type repository interface {
+	Read() ([]byte, error)
+	Write([]byte) error
 }
 
 type tracker struct {
-	db persistence
+	repo  repository
+	loc   *time.Location
+	times []time.Time
 }
 
-func newTracker(db persistence) *tracker {
-	return &tracker{db: db}
+func newTracker(repo repository) (*tracker, error) {
+	tracker := tracker{
+		repo: repo,
+		loc:  time.Now().Location(),
+	}
+
+	if err := tracker.load(); err != nil {
+		return nil, errors.Wrap(err, "failed to load data")
+	}
+
+	return &tracker, nil
 }
 
 func (t *tracker) Start(start time.Time) error {
-	times, err := t.db.Read()
-	if err != nil {
-		return errors.Wrap(err, "read failed")
-	}
-
-	if len(times)%2 != 0 {
+	if len(t.times)%2 != 0 {
 		return errors.New("already started")
 	}
 
-	times = append(times, start)
+	t.times = append(t.times, start)
 
-	err = t.db.Write(times)
-	if err != nil {
-		return errors.Wrap(err, "write failed")
+	if err := t.save(); err != nil {
+		return errors.Wrap(err, "save failed")
 	}
 
 	return nil
 }
 
 func (t *tracker) End(end time.Time) error {
-	times, err := t.db.Read()
-	if err != nil {
-		return errors.Wrap(err, "read failed")
-	}
-
-	if len(times)%2 == 0 {
+	if len(t.times)%2 == 0 {
 		return errors.New("not started")
 	}
 
-	times = append(times, end)
+	t.times = append(t.times, end)
 
-	err = t.db.Write(times)
-	if err != nil {
-		return errors.Wrap(err, "write failed")
+	if err := t.save(); err != nil {
+		return errors.Wrap(err, "save failed")
 	}
 
 	return nil
 }
 
-func (t *tracker) Days() ([]*day, error) {
-	times, err := t.db.Read()
-	if err != nil {
-		return nil, errors.Wrap(err, "read failed")
-	}
-
+func (t *tracker) Days() []*day {
 	days := []*day{}
-	for _, t := range times {
+	for _, t := range t.times {
 		if len(days) == 0 {
 			days = append(days, newDay(t))
 			continue
@@ -85,7 +83,81 @@ func (t *tracker) Days() ([]*day, error) {
 			day.Entries = append(day.Entries, &entry{Start: t})
 		}
 	}
-	return days, nil
+
+	return days
+}
+
+func (t *tracker) load() error {
+	data, err := t.repo.Read()
+	if err != nil {
+		return errors.Wrap(err, "failed to read data")
+	}
+
+	if len(data) > 0 {
+		if err := t.decode(data); err != nil {
+			return errors.Wrap(err, "decode failed")
+		}
+	}
+
+	return nil
+}
+
+func (t *tracker) save() error {
+	data, err := t.encode()
+	if err != nil {
+		return errors.Wrap(err, "encode failed")
+	}
+
+	if err := t.repo.Write(data); err != nil {
+		return errors.Wrap(err, "failed to write data")
+	}
+
+	return nil
+}
+
+func (t *tracker) decode(data []byte) error {
+	var decoded map[string][]string
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return errors.Wrap(err, "json decode failed")
+	}
+
+	dates := make([]string, 0, len(decoded))
+	for d := range decoded {
+		dates = append(dates, d)
+	}
+	sort.Strings(dates)
+
+	for _, d := range dates {
+		for _, e := range decoded[d] {
+			timeString := d + " " + e
+			tm, err := time.ParseInLocation("2006-01-02 15:04", timeString, t.loc)
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse entry %s", timeString)
+			}
+			t.times = append(t.times, tm)
+		}
+	}
+
+	return nil
+}
+
+func (t *tracker) encode() ([]byte, error) {
+	data := map[string][]string{}
+
+	for _, t := range t.times {
+		date := t.Format("2006-01-02")
+		if _, exists := data[date]; !exists {
+			data[date] = []string{}
+		}
+		data[date] = append(data[date], t.Format("15:04"))
+	}
+
+	encoded, err := json.MarshalIndent(&data, "", "  ")
+	if err != nil {
+		return nil, errors.Wrap(err, "json encode failed")
+	}
+
+	return encoded, nil
 }
 
 func sameDay(a, b time.Time) bool {

@@ -18,6 +18,7 @@ func newDay(t time.Time) *day {
 	return &day{Date: t, Entries: []*entry{&entry{Start: t}}}
 }
 
+// Time returns the sum of all entries.
 func (d *day) Time() time.Duration {
 	var worked time.Duration
 

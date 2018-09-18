@@ -10,7 +10,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const jsonfile = ".tt.json"
+const fileName = ".tt.json"
 const roundTo = 15 * time.Minute
 
 func main() {
@@ -20,24 +20,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	path := filepath.Join(home, jsonfile)
+	storage := newFileRepo(filepath.Join(home, fileName))
 
-	db := newJSONFile(path)
-	tracker := newTracker(db)
+	tracker, err := newTracker(storage)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to create tracker: %v\n", err)
+		os.Exit(1)
+	}
 
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
 		switch cmd {
 		case "start":
-			err := tracker.Start(time.Now())
-			if err != nil {
+			if err := tracker.Start(time.Now()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to add start time: %v\n", err)
 				os.Exit(1)
 			}
 		case "stop":
-			err := tracker.End(time.Now())
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to add stop time: %v\n", err)
+			if err := tracker.End(time.Now()); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to add end time: %v\n", err)
 				os.Exit(1)
 			}
 		default:
@@ -46,16 +47,10 @@ func main() {
 		}
 	}
 
-	days, err := tracker.Days()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to get days: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Print(format(days))
+	fmt.Print(formatDays(tracker.Days()))
 }
 
-func format(days []*day) string {
+func formatDays(days []*day) string {
 	var b bytes.Buffer
 	var week int
 	for _, day := range days {
