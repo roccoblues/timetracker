@@ -8,8 +8,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const timeZone = "Europe/Berlin"
-
 type repository interface {
 	Read() ([]byte, error)
 	Write([]byte) error
