@@ -234,6 +234,13 @@ func Test_tracker_Start(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "new day previous not stopped",
+			before:  test.OneDayOnlyStartJSON,
+			after:   test.MultipleDaysNotEndedJSON,
+			start:   test.Time(t, "2018-09-02 08:00"),
+			wantErr: false,
+		},
+		{
 			name:    "already started",
 			before:  test.OneDayOnlyStartJSON,
 			after:   test.OneDayOnlyStartJSON,
@@ -288,6 +295,13 @@ func Test_tracker_End(t *testing.T) {
 			after:   test.EmptyJSON,
 			end:     test.Time(t, "2018-09-01 16:00"),
 			wantErr: true,
+		},
+		{
+			name:    "new day previous not stopped",
+			before:  test.MultipleDaysNotEndedJSON,
+			after:   test.MultipleDaysNotEndedEndJSON,
+			end:     test.Time(t, "2018-09-02 16:00"),
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

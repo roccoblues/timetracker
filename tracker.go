@@ -33,7 +33,14 @@ func newTracker(repo repository) (*tracker, error) {
 }
 
 func (t *tracker) Start(start time.Time) error {
-	if len(t.times)%2 != 0 {
+	count := 0
+	for _, tm := range t.times {
+		if sameDay(start, tm) {
+			count++
+		}
+	}
+
+	if count%2 != 0 {
 		return errors.New("already started")
 	}
 
@@ -47,7 +54,14 @@ func (t *tracker) Start(start time.Time) error {
 }
 
 func (t *tracker) End(end time.Time) error {
-	if len(t.times)%2 == 0 {
+	count := 0
+	for _, tm := range t.times {
+		if sameDay(end, tm) {
+			count++
+		}
+	}
+
+	if count%2 == 0 {
 		return errors.New("not started")
 	}
 
