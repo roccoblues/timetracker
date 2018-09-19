@@ -1,15 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/roccoblues/tt/test"
 )
 
-func Test_formatDays(t *testing.T) {
-	testTime1, err := time.Parse("2006-01-02 15:04", "2018-09-01 10:00")
-	if err != nil {
-		t.Fatal(err)
-	}
+func Test_writeDays(t *testing.T) {
+	testTime1 := test.Time(t, "2018-09-01 10:00")
 	testTime2 := testTime1.Add(time.Hour * 2)
 	testTime3 := testTime1.Add(time.Hour * 4)
 	testTime4 := testTime1.Add(time.Hour * 24)
@@ -59,8 +60,10 @@ func Test_formatDays(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := formatDays(tt.days); got != tt.want {
-				t.Errorf("format() = %v, want %v", got, tt.want)
+			buf := bytes.Buffer{}
+			writeDays(tt.days, &buf)
+			if diff := cmp.Diff(tt.want, string(buf.Bytes())); diff != "" {
+				t.Errorf("writeDays() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}

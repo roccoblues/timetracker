@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -47,35 +47,32 @@ func main() {
 		}
 	}
 
-	fmt.Print(formatDays(tracker.Days()))
+	writeDays(tracker.Days(), os.Stdout)
 }
 
-func formatDays(days []*day) string {
-	var b bytes.Buffer
+func writeDays(days []*day, output io.Writer) {
 	var week int
 	for _, day := range days {
 		_, w := day.Date.ISOWeek()
 		if week > 0 && week != w {
-			b.WriteString("\n")
+			fmt.Fprintln(output, "")
 		}
 		week = w
 
-		b.WriteString(fmt.Sprintf("%s  %.2f  ", day.Date.Format("02.01.2006"), day.Time().Round(roundTo).Hours()))
+		fmt.Fprintf(output, "%s  %.2f  ", day.Date.Format("02.01.2006"), day.Time().Round(roundTo).Hours())
 
 		for i, e := range day.Entries {
 			start := e.Start.Round(roundTo).Format("15:04")
 			if e.End.IsZero() {
-				b.WriteString(fmt.Sprintf("%s-", start))
+				fmt.Fprintf(output, "%s-", start)
 			} else {
 				end := e.End.Round(roundTo).Format("15:04")
-				b.WriteString(fmt.Sprintf("%s-%s ", start, end))
+				fmt.Fprintf(output, "%s-%s ", start, end)
 			}
 
 			if i == len(day.Entries)-1 {
-				b.WriteString("\n")
+				fmt.Fprintln(output, "")
 			}
 		}
 	}
-
-	return b.String()
 }
