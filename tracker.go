@@ -173,5 +173,8 @@ func (t *tracker) encode() ([]byte, error) {
 }
 
 func sameDay(a, b time.Time) bool {
-	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
+	aYear, aMonth, aDay := a.Date()
+	bYear, bMonth, bDay := b.Date()
+
+	return aDay == bDay && aMonth == bMonth && aYear == bYear
 }
