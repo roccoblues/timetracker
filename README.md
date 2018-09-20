@@ -1,4 +1,4 @@
-# tt
+# tt [![Build Status](https://travis-ci.com/roccoblues/tt.svg?branch=master)](https://travis-ci.com/roccoblues/tt)
 
 Command line time tracker. Times are rounded to 15 minutes.
 
