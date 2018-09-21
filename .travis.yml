@@ -8,5 +8,5 @@ before_script:
 script:
   - go test -race -coverprofile c.out
 
--after_script:
+after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
