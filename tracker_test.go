@@ -11,23 +11,23 @@ import (
 )
 
 type testRepo struct {
-	data     []byte
+	times    []time.Time
 	readErr  bool
 	writeErr bool
 }
 
-func (r *testRepo) Read() ([]byte, error) {
+func (r *testRepo) Read() ([]time.Time, error) {
 	if r.readErr {
 		return nil, errors.New("read failed")
 	}
-	return r.data, nil
+	return r.times, nil
 }
 
-func (r *testRepo) Write(d []byte) error {
+func (r *testRepo) Write(times []time.Time) error {
 	if r.writeErr {
 		return errors.New("write failed")
 	}
-	r.data = d
+	r.times = times
 	return nil
 }
 
@@ -39,34 +39,16 @@ func Test_newTracker(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "empty",
-			repo:    &testRepo{},
-			want:    []*day{},
-			wantErr: false,
-		},
-		{
 			name:    "load error",
 			repo:    &testRepo{readErr: true},
 			want:    nil,
 			wantErr: true,
 		},
 		{
-			name:    "invalid json",
-			repo:    &testRepo{data: []byte(test.InvalidJSON)},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name:    "invalid date",
-			repo:    &testRepo{data: []byte(test.InvalidDateJSON)},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name:    "invalid time",
-			repo:    &testRepo{data: []byte(test.InvalidTimeJSON)},
-			want:    nil,
-			wantErr: true,
+			name:    "empty",
+			repo:    &testRepo{},
+			want:    []*day{},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -86,25 +68,217 @@ func Test_newTracker(t *testing.T) {
 	}
 }
 
-func Test_tracker_Days(t *testing.T) {
+func Test_tracker_Start(t *testing.T) {
 	tests := []struct {
-		name string
-		json string
-		want []*day
+		name         string
+		start        time.Time
+		before       []time.Time
+		after        []time.Time
+		wantErr      bool
+		repoWriteErr bool
 	}{
 		{
-			name: "empty json",
-			json: test.EmptyJSON,
-			want: []*day{},
+			name:   "first entry",
+			start:  test.Time(t, "2018-09-01 10:00"),
+			before: []time.Time{},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 10:00"),
+			},
+			wantErr: false,
 		},
 		{
-			name: "empty day",
-			json: test.EmptyDayJSON,
-			want: []*day{},
+			name:  "second entry",
+			start: test.Time(t, "2018-09-01 13:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-01 13:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "new day",
+			start: test.Time(t, "2018-09-02 08:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-02 08:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "new day previous not stopped",
+			start: test.Time(t, "2018-09-02 08:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-02 08:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "already started",
+			start: test.Time(t, "2018-09-01 16:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			wantErr: true,
+		},
+		{
+			name:         "write failure",
+			start:        test.Time(t, "2018-09-01 10:00"),
+			before:       []time.Time{},
+			after:        []time.Time{},
+			wantErr:      true,
+			repoWriteErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &testRepo{times: tt.before, writeErr: tt.repoWriteErr}
+			tr, err := newTracker(repo)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = tr.Start(tt.start)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("tracker.Start() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			got, err := repo.Read()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tt.after, got); diff != "" {
+				t.Errorf("tracker.Start() differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_tracker_End(t *testing.T) {
+	tests := []struct {
+		name         string
+		end          time.Time
+		before       []time.Time
+		after        []time.Time
+		wantErr      bool
+		repoWriteErr bool
+	}{
+		{
+			name: "end first entry",
+			end:  test.Time(t, "2018-09-01 12:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "end second day",
+			end:  test.Time(t, "2018-09-02 16:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-02 10:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-02 10:00"),
+				test.Time(t, "2018-09-02 16:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name:    "not started",
+			end:     test.Time(t, "2018-09-01 16:00"),
+			before:  []time.Time{},
+			after:   []time.Time{},
+			wantErr: true,
+		},
+		{
+			name: "new day previous not stopped",
+			end:  test.Time(t, "2018-09-02 16:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-02 10:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+				test.Time(t, "2018-09-02 10:00"),
+				test.Time(t, "2018-09-02 16:00"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "write failure",
+			end:  test.Time(t, "2018-09-01 12:00"),
+			before: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			after: []time.Time{
+				test.Time(t, "2018-09-01 08:00"),
+			},
+			wantErr:      true,
+			repoWriteErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &testRepo{times: tt.before, writeErr: tt.repoWriteErr}
+			tr, err := newTracker(repo)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = tr.End(tt.end)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("tracker.End() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			got, err := repo.Read()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tt.after, got); diff != "" {
+				t.Errorf("tracker.End() differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_tracker_Days(t *testing.T) {
+	tests := []struct {
+		name  string
+		times []time.Time
+		want  []*day
+	}{
+		{
+			name:  "empty",
+			times: []time.Time{},
+			want:  []*day{},
 		},
 		{
 			name: "one day only start",
-			json: test.OneDayOnlyStartJSON,
+			times: []time.Time{
+				test.Time(t, "2018-09-01 10:00"),
+			},
 			want: []*day{
 				&day{
 					Date: test.Time(t, "2018-09-01 10:00"),
@@ -116,7 +290,10 @@ func Test_tracker_Days(t *testing.T) {
 		},
 		{
 			name: "one day start/end",
-			json: test.OneDayStartEndJSON,
+			times: []time.Time{
+				test.Time(t, "2018-09-01 10:00"),
+				test.Time(t, "2018-09-01 12:00"),
+			},
 			want: []*day{
 				&day{
 					Date: test.Time(t, "2018-09-01 10:00"),
@@ -128,7 +305,11 @@ func Test_tracker_Days(t *testing.T) {
 		},
 		{
 			name: "one day start/end start",
-			json: test.OneDayStartEndStartJSON,
+			times: []time.Time{
+				test.Time(t, "2018-09-01 10:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-01 13:00"),
+			},
 			want: []*day{
 				&day{
 					Date: test.Time(t, "2018-09-01 10:00"),
@@ -141,7 +322,11 @@ func Test_tracker_Days(t *testing.T) {
 		},
 		{
 			name: "multiple days",
-			json: test.MultipleDaysJSON,
+			times: []time.Time{
+				test.Time(t, "2018-09-01 10:00"),
+				test.Time(t, "2018-09-01 12:00"),
+				test.Time(t, "2018-09-02 08:00"),
+			},
 			want: []*day{
 				&day{
 					Date: test.Time(t, "2018-09-01 10:00"),
@@ -160,7 +345,7 @@ func Test_tracker_Days(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tr, err := newTracker(&testRepo{data: []byte(tt.json)})
+			tr, err := newTracker(&testRepo{times: tt.times})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -172,7 +357,7 @@ func Test_tracker_Days(t *testing.T) {
 	}
 }
 
-func Test_sameDay(t *testing.T) {
+func Test_sameDate(t *testing.T) {
 	testTime := test.Time(t, "2018-09-01 10:00")
 
 	tests := []struct {
@@ -197,127 +382,8 @@ func Test_sameDay(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := sameDay(tt.a, tt.b); got != tt.want {
-				t.Errorf("SameDay() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_tracker_Start(t *testing.T) {
-	tests := []struct {
-		name    string
-		before  string
-		start   time.Time
-		after   string
-		wantErr bool
-	}{
-		{
-			name:    "first entry",
-			before:  test.EmptyJSON,
-			after:   test.OneDayOnlyStartJSON,
-			start:   test.Time(t, "2018-09-01 10:00"),
-			wantErr: false,
-		},
-		{
-			name:    "second entry",
-			before:  test.OneDayStartEndJSON,
-			after:   test.OneDayStartEndStartJSON,
-			start:   test.Time(t, "2018-09-01 13:00"),
-			wantErr: false,
-		},
-		{
-			name:    "new day",
-			before:  test.OneDayStartEndJSON,
-			after:   test.MultipleDaysJSON,
-			start:   test.Time(t, "2018-09-02 08:00"),
-			wantErr: false,
-		},
-		{
-			name:    "new day previous not stopped",
-			before:  test.OneDayOnlyStartJSON,
-			after:   test.MultipleDaysNotEndedJSON,
-			start:   test.Time(t, "2018-09-02 08:00"),
-			wantErr: false,
-		},
-		{
-			name:    "already started",
-			before:  test.OneDayOnlyStartJSON,
-			after:   test.OneDayOnlyStartJSON,
-			start:   test.Time(t, "2018-09-01 16:00"),
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := &testRepo{data: []byte(tt.before)}
-			tr, err := newTracker(repo)
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = tr.Start(tt.start)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("tracker.Start() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if diff := cmp.Diff(tt.after, string(repo.data)); diff != "" {
-				t.Errorf("tracker.Start() differs: (-want +got)\n%s", diff)
-			}
-		})
-	}
-}
-
-func Test_tracker_End(t *testing.T) {
-	tests := []struct {
-		name    string
-		before  string
-		end     time.Time
-		after   string
-		wantErr bool
-	}{
-		{
-			name:    "end first entry",
-			before:  test.OneDayOnlyStartJSON,
-			after:   test.OneDayStartEndJSON,
-			end:     test.Time(t, "2018-09-01 12:00"),
-			wantErr: false,
-		},
-		{
-			name:    "end second day",
-			before:  test.MultipleDaysJSON,
-			after:   test.MultipleDaysEndJSON,
-			end:     test.Time(t, "2018-09-02 16:00"),
-			wantErr: false,
-		},
-		{
-			name:    "not started",
-			before:  test.EmptyJSON,
-			after:   test.EmptyJSON,
-			end:     test.Time(t, "2018-09-01 16:00"),
-			wantErr: true,
-		},
-		{
-			name:    "new day previous not stopped",
-			before:  test.MultipleDaysNotEndedJSON,
-			after:   test.MultipleDaysNotEndedEndJSON,
-			end:     test.Time(t, "2018-09-02 16:00"),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := &testRepo{data: []byte(tt.before)}
-			tr, err := newTracker(repo)
-			if err != nil {
-				t.Fatal(err)
-			}
-			err = tr.End(tt.end)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("tracker.End() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if diff := cmp.Diff(tt.after, string(repo.data)); diff != "" {
-				t.Errorf("tracker.End() differs: (-want +got)\n%s", diff)
+			if got := sameDate(tt.a, tt.b); got != tt.want {
+				t.Errorf("sameDate() = %v, want %v", got, tt.want)
 			}
 		})
 	}

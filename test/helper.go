@@ -88,36 +88,6 @@ var MultipleDaysJSON = heredoc.Doc(`{
   ]
 }`)
 
-var MultipleDaysEndJSON = heredoc.Doc(`{
-  "2018-09-01": [
-    "10:00",
-    "12:00"
-  ],
-  "2018-09-02": [
-    "08:00",
-    "16:00"
-  ]
-}`)
-
-var MultipleDaysNotEndedJSON = heredoc.Doc(`{
-  "2018-09-01": [
-    "10:00"
-  ],
-  "2018-09-02": [
-    "08:00"
-  ]
-}`)
-
-var MultipleDaysNotEndedEndJSON = heredoc.Doc(`{
-  "2018-09-01": [
-    "10:00"
-  ],
-  "2018-09-02": [
-    "08:00",
-    "16:00"
-  ]
-}`)
-
 var InvalidDateJSON = heredoc.Doc(`{
   "2018-09-00": [
     "10:00"
