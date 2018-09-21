@@ -2,8 +2,8 @@ language: go
 go:
   - "1.11"
 
-install: true
+install:
+  - env GO111MODULE=on go build
 
 script:
-  - env GO111MODULE=on go build
   - env GO111MODULE=on go test -race -cover
