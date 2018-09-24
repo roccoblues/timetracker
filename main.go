@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -21,35 +23,59 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Failed to find home directory: %v\n", err)
 		os.Exit(1)
 	}
+	fullPath := filepath.Join(home, fileName)
 
-	storage := newFileRepo(filepath.Join(home, fileName))
+	ts := &timeSheet{}
 
-	tracker, err := newTracker(storage)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create tracker: %v\n", err)
-		os.Exit(1)
+	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
+		bytes, err := ioutil.ReadFile(fullPath)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read file '%s': %v\n", fullPath, err)
+			os.Exit(1)
+		}
+		if err := json.Unmarshal(bytes, &ts); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to decode json: %v\n", err)
+			os.Exit(1)
+		}
 	}
+
+	modified := false
 
 	if len(os.Args) > 1 {
 		cmd := os.Args[1]
 		switch cmd {
 		case "start":
-			if err := tracker.Start(time.Now()); err != nil {
+			if err := ts.Start(time.Now()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to add start time: %v\n", err)
 				os.Exit(1)
 			}
+			modified = true
 		case "stop":
-			if err := tracker.End(time.Now()); err != nil {
+			if err := ts.End(time.Now()); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to add end time: %v\n", err)
 				os.Exit(1)
 			}
+			modified = true
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
 			os.Exit(1)
 		}
 	}
 
-	writeDays(tracker.Days(), os.Stdout)
+	if modified {
+		bytes, err := json.MarshalIndent(ts, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to encode json: %v\n", err)
+			os.Exit(1)
+		}
+
+		if err := ioutil.WriteFile(fullPath, bytes, 0644); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write file '%s': %v\n", fullPath, err)
+			os.Exit(1)
+		}
+	}
+
+	writeDays(ts.Days(), os.Stdout)
 }
 
 func writeDays(days []*day, output io.Writer) {

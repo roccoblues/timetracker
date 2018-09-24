@@ -9,38 +9,35 @@ import (
 )
 
 func Test_writeDays(t *testing.T) {
-	testTime1 := newTime(t, "2018-09-01 10:00")
-	testTime2 := testTime1.Add(time.Hour * 2)
-	testTime3 := testTime1.Add(time.Hour * 4)
-	testTime4 := testTime1.Add(time.Hour * 24)
-	testTime5 := testTime1.Add(time.Hour * 24 * 8)
+	testTime := newTime(t, "2018-09-01 10:00")
 
 	days := []*day{
 		&day{
-			Date: testTime1,
+			Date: testTime,
 			Entries: []*entry{
 				&entry{
-					Start: testTime1,
-					End:   testTime2,
+					Start: testTime,
+					End:   testTime.Add(time.Hour * 2),
 				},
 				&entry{
-					Start: testTime3,
-				},
-			},
-		},
-		&day{
-			Date: testTime4,
-			Entries: []*entry{
-				&entry{
-					Start: testTime4,
+					Start: testTime.Add(time.Hour * 4),
 				},
 			},
 		},
 		&day{
-			Date: testTime5,
+			Date: testTime.Add(time.Hour * 24),
 			Entries: []*entry{
 				&entry{
-					Start: testTime5,
+					Start: testTime.Add(time.Hour * 24),
+				},
+			},
+		},
+		&day{
+			Date: testTime.Add(time.Hour * 24 * 8),
+			Entries: []*entry{
+				&entry{
+					Start: testTime.Add(time.Hour * 24 * 8),
+					End:   testTime.Add(time.Hour * 25 * 8),
 				},
 			},
 		},
@@ -54,7 +51,7 @@ func Test_writeDays(t *testing.T) {
 		{
 			name: "works",
 			days: days,
-			want: "01.09.2018  2.00  10:00-12:00 14:00-\n02.09.2018  0.00  10:00-\n\n09.09.2018  0.00  10:00-\n",
+			want: "01.09.2018  2.00  10:00-12:00 14:00-\n02.09.2018  0.00  10:00-\n\n09.09.2018  8.00  10:00-18:00 \n",
 		},
 	}
 	for _, tt := range tests {
