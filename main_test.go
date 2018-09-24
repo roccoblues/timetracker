@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/roccoblues/tt/test"
 )
 
 func Test_writeDays(t *testing.T) {
-	testTime1 := test.Time(t, "2018-09-01 10:00")
+	testTime1 := newTime(t, "2018-09-01 10:00")
 	testTime2 := testTime1.Add(time.Hour * 2)
 	testTime3 := testTime1.Add(time.Hour * 4)
 	testTime4 := testTime1.Add(time.Hour * 24)

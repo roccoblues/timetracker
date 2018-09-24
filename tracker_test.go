@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
-	"github.com/roccoblues/tt/test"
 )
 
 type testRepo struct {
@@ -79,67 +78,67 @@ func Test_tracker_Start(t *testing.T) {
 	}{
 		{
 			name:   "first entry",
-			start:  test.Time(t, "2018-09-01 10:00"),
+			start:  newTime(t, "2018-09-01 10:00"),
 			before: []time.Time{},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 10:00"),
+				newTime(t, "2018-09-01 10:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "second entry",
-			start: test.Time(t, "2018-09-01 13:00"),
+			start: newTime(t, "2018-09-01 13:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-01 13:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 13:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "new day",
-			start: test.Time(t, "2018-09-02 08:00"),
+			start: newTime(t, "2018-09-02 08:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-02 08:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-02 08:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "new day previous not stopped",
-			start: test.Time(t, "2018-09-02 08:00"),
+			start: newTime(t, "2018-09-02 08:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-02 08:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-02 08:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "already started",
-			start: test.Time(t, "2018-09-01 16:00"),
+			start: newTime(t, "2018-09-01 16:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			wantErr: true,
 		},
 		{
 			name:         "write failure",
-			start:        test.Time(t, "2018-09-01 10:00"),
+			start:        newTime(t, "2018-09-01 10:00"),
 			before:       []time.Time{},
 			after:        []time.Time{},
 			wantErr:      true,
@@ -180,61 +179,61 @@ func Test_tracker_End(t *testing.T) {
 	}{
 		{
 			name: "end first entry",
-			end:  test.Time(t, "2018-09-01 12:00"),
+			end:  newTime(t, "2018-09-01 12:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "end second day",
-			end:  test.Time(t, "2018-09-02 16:00"),
+			end:  newTime(t, "2018-09-02 16:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-02 10:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-02 10:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-02 10:00"),
-				test.Time(t, "2018-09-02 16:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-02 10:00"),
+				newTime(t, "2018-09-02 16:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:    "not started",
-			end:     test.Time(t, "2018-09-01 16:00"),
+			end:     newTime(t, "2018-09-01 16:00"),
 			before:  []time.Time{},
 			after:   []time.Time{},
 			wantErr: true,
 		},
 		{
 			name: "new day previous not stopped",
-			end:  test.Time(t, "2018-09-02 16:00"),
+			end:  newTime(t, "2018-09-02 16:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-02 10:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-02 10:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
-				test.Time(t, "2018-09-02 10:00"),
-				test.Time(t, "2018-09-02 16:00"),
+				newTime(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-02 10:00"),
+				newTime(t, "2018-09-02 16:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "write failure",
-			end:  test.Time(t, "2018-09-01 12:00"),
+			end:  newTime(t, "2018-09-01 12:00"),
 			before: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			after: []time.Time{
-				test.Time(t, "2018-09-01 08:00"),
+				newTime(t, "2018-09-01 08:00"),
 			},
 			wantErr:      true,
 			repoWriteErr: true,
@@ -277,13 +276,13 @@ func Test_tracker_Days(t *testing.T) {
 		{
 			name: "one day only start",
 			times: []time.Time{
-				test.Time(t, "2018-09-01 10:00"),
+				newTime(t, "2018-09-01 10:00"),
 			},
 			want: []*day{
 				&day{
-					Date: test.Time(t, "2018-09-01 10:00"),
+					Date: newTime(t, "2018-09-01 10:00"),
 					Entries: []*entry{
-						&entry{Start: test.Time(t, "2018-09-01 10:00")},
+						&entry{Start: newTime(t, "2018-09-01 10:00")},
 					},
 				},
 			},
@@ -291,14 +290,14 @@ func Test_tracker_Days(t *testing.T) {
 		{
 			name: "one day start/end",
 			times: []time.Time{
-				test.Time(t, "2018-09-01 10:00"),
-				test.Time(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 10:00"),
+				newTime(t, "2018-09-01 12:00"),
 			},
 			want: []*day{
 				&day{
-					Date: test.Time(t, "2018-09-01 10:00"),
+					Date: newTime(t, "2018-09-01 10:00"),
 					Entries: []*entry{
-						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
+						&entry{Start: newTime(t, "2018-09-01 10:00"), End: newTime(t, "2018-09-01 12:00")},
 					},
 				},
 			},
@@ -306,16 +305,16 @@ func Test_tracker_Days(t *testing.T) {
 		{
 			name: "one day start/end start",
 			times: []time.Time{
-				test.Time(t, "2018-09-01 10:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-01 13:00"),
+				newTime(t, "2018-09-01 10:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-01 13:00"),
 			},
 			want: []*day{
 				&day{
-					Date: test.Time(t, "2018-09-01 10:00"),
+					Date: newTime(t, "2018-09-01 10:00"),
 					Entries: []*entry{
-						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
-						&entry{Start: test.Time(t, "2018-09-01 13:00")},
+						&entry{Start: newTime(t, "2018-09-01 10:00"), End: newTime(t, "2018-09-01 12:00")},
+						&entry{Start: newTime(t, "2018-09-01 13:00")},
 					},
 				},
 			},
@@ -323,21 +322,21 @@ func Test_tracker_Days(t *testing.T) {
 		{
 			name: "multiple days",
 			times: []time.Time{
-				test.Time(t, "2018-09-01 10:00"),
-				test.Time(t, "2018-09-01 12:00"),
-				test.Time(t, "2018-09-02 08:00"),
+				newTime(t, "2018-09-01 10:00"),
+				newTime(t, "2018-09-01 12:00"),
+				newTime(t, "2018-09-02 08:00"),
 			},
 			want: []*day{
 				&day{
-					Date: test.Time(t, "2018-09-01 10:00"),
+					Date: newTime(t, "2018-09-01 10:00"),
 					Entries: []*entry{
-						&entry{Start: test.Time(t, "2018-09-01 10:00"), End: test.Time(t, "2018-09-01 12:00")},
+						&entry{Start: newTime(t, "2018-09-01 10:00"), End: newTime(t, "2018-09-01 12:00")},
 					},
 				},
 				&day{
-					Date: test.Time(t, "2018-09-02 08:00"),
+					Date: newTime(t, "2018-09-02 08:00"),
 					Entries: []*entry{
-						&entry{Start: test.Time(t, "2018-09-02 08:00")},
+						&entry{Start: newTime(t, "2018-09-02 08:00")},
 					},
 				},
 			},
@@ -358,7 +357,7 @@ func Test_tracker_Days(t *testing.T) {
 }
 
 func Test_sameDate(t *testing.T) {
-	testTime := test.Time(t, "2018-09-01 10:00")
+	testTime := newTime(t, "2018-09-01 10:00")
 
 	tests := []struct {
 		name string
