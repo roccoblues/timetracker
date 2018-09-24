@@ -23,30 +23,30 @@ func (f *fileRepo) Read() ([]time.Time, error) {
 		return []time.Time{}, nil
 	}
 
-	data, err := ioutil.ReadFile(f.path)
+	bytes, err := ioutil.ReadFile(f.path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read file '%s'", f.path)
 	}
 
-	return decode(data)
+	return decode(bytes)
 }
 
 func (f *fileRepo) Write(times []time.Time) error {
-	data, err := encode(times)
+	bytes, err := encode(times)
 	if err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(f.path, data, 0644); err != nil {
+	if err := ioutil.WriteFile(f.path, bytes, 0644); err != nil {
 		return errors.Wrapf(err, "failed to write to '%s'", f.path)
 	}
 
 	return nil
 }
 
-func decode(data []byte) ([]time.Time, error) {
+func decode(bytes []byte) ([]time.Time, error) {
 	var decoded map[string][]string
-	if err := json.Unmarshal(data, &decoded); err != nil {
+	if err := json.Unmarshal(bytes, &decoded); err != nil {
 		return nil, errors.Wrap(err, "json decode failed")
 	}
 
@@ -84,10 +84,10 @@ func encode(times []time.Time) ([]byte, error) {
 		data[date] = append(data[date], t.Format(timeFormat))
 	}
 
-	encoded, err := json.MarshalIndent(&data, "", "  ")
+	bytes, err := json.MarshalIndent(&data, "", "  ")
 	if err != nil {
 		return nil, errors.Wrap(err, "json encode failed")
 	}
 
-	return encoded, nil
+	return bytes, nil
 }
