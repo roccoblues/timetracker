@@ -12,6 +12,8 @@ import (
 
 const fileName = ".tt.json"
 const roundTo = 15 * time.Minute
+const timeFormat = "15:04"
+const dateTimeFormat = "2006-01-02 15:04"
 
 func main() {
 	home, err := homedir.Dir()
@@ -62,11 +64,11 @@ func writeDays(days []*day, output io.Writer) {
 		fmt.Fprintf(output, "%s  %.2f  ", day.Date.Format("02.01.2006"), day.Time().Round(roundTo).Hours())
 
 		for i, e := range day.Entries {
-			start := e.Start.Round(roundTo).Format("15:04")
+			start := e.Start.Round(roundTo).Format(timeFormat)
 			if e.End.IsZero() {
 				fmt.Fprintf(output, "%s-", start)
 			} else {
-				end := e.End.Round(roundTo).Format("15:04")
+				end := e.End.Round(roundTo).Format(timeFormat)
 				fmt.Fprintf(output, "%s-%s ", start, end)
 			}
 

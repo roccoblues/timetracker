@@ -62,7 +62,7 @@ func decode(data []byte) ([]time.Time, error) {
 	for _, d := range dates {
 		for _, e := range decoded[d] {
 			timeString := d + " " + e
-			tm, err := time.ParseInLocation("2006-01-02 15:04", timeString, loc)
+			tm, err := time.ParseInLocation(dateTimeFormat, timeString, loc)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to parse entry %s", timeString)
 			}
@@ -81,7 +81,7 @@ func encode(times []time.Time) ([]byte, error) {
 		if _, exists := data[date]; !exists {
 			data[date] = []string{}
 		}
-		data[date] = append(data[date], t.Format("15:04"))
+		data[date] = append(data[date], t.Format(timeFormat))
 	}
 
 	encoded, err := json.MarshalIndent(&data, "", "  ")
