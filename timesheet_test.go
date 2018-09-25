@@ -66,7 +66,7 @@ func Test_timeSheet_Days(t *testing.T) {
 		{
 			name:  "empty",
 			times: []time.Time{},
-			want:  []*day{},
+			want:  nil,
 		},
 		{
 			name: "one day only start",

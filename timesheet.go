@@ -47,7 +47,7 @@ func (t *timeSheet) End(end time.Time) error {
 }
 
 func (t *timeSheet) Days() []*day {
-	days := []*day{}
+	var days []*day
 
 	for _, t := range t.times {
 		if len(days) == 0 {
