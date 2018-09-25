@@ -18,11 +18,18 @@ const timeFormat = "15:04"
 const dateTimeFormat = "2006-01-02 15:04"
 
 func main() {
-	home, err := homedir.Dir()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to find home directory: %v\n", err)
+	if err := run(os.Args); err != nil {
+		fmt.Fprintf(os.Stderr, "[ERROR] %s\n", err)
 		os.Exit(1)
 	}
+}
+
+func run(args []string) error {
+	home, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+
 	fullPath := filepath.Join(home, fileName)
 
 	ts := &timeSheet{}
@@ -30,52 +37,46 @@ func main() {
 	if _, err := os.Stat(fullPath); !os.IsNotExist(err) {
 		bytes, err := ioutil.ReadFile(fullPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to read file '%s': %v\n", fullPath, err)
-			os.Exit(1)
+			return err
 		}
 		if err := json.Unmarshal(bytes, &ts); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to decode json: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 	}
 
 	modified := false
 
-	if len(os.Args) > 1 {
-		cmd := os.Args[1]
+	if len(args) > 1 {
+		cmd := args[1]
 		switch cmd {
 		case "start":
 			if err := ts.Start(time.Now()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to add start time: %v\n", err)
-				os.Exit(1)
+				return err
 			}
 			modified = true
 		case "stop":
 			if err := ts.End(time.Now()); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to add end time: %v\n", err)
-				os.Exit(1)
+				return err
 			}
 			modified = true
 		default:
-			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
-			os.Exit(1)
+			return fmt.Errorf("unknown command: %s", cmd)
 		}
 	}
 
 	if modified {
 		bytes, err := json.MarshalIndent(ts, "", "  ")
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to encode json: %v\n", err)
-			os.Exit(1)
+			return err
 		}
-
 		if err := ioutil.WriteFile(fullPath, bytes, 0644); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to write file '%s': %v\n", fullPath, err)
-			os.Exit(1)
+			return err
 		}
 	}
 
 	writeDays(ts.Days(), os.Stdout)
+
+	return nil
 }
 
 func writeDays(days []*day, output io.Writer) {

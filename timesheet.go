@@ -2,10 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 type timeSheet struct {
@@ -21,7 +20,7 @@ func (t *timeSheet) Start(start time.Time) error {
 	}
 
 	if c%2 != 0 {
-		return errors.New("already started")
+		return fmt.Errorf("already started")
 	}
 
 	t.times = append(t.times, start)
@@ -38,7 +37,7 @@ func (t *timeSheet) End(end time.Time) error {
 	}
 
 	if c%2 == 0 {
-		return errors.New("not started")
+		return fmt.Errorf("not started")
 	}
 
 	t.times = append(t.times, end)
@@ -105,7 +104,7 @@ func (t *timeSheet) UnmarshalJSON(bytes []byte) error {
 			timeString := d + " " + e
 			tm, err := time.ParseInLocation(dateTimeFormat, timeString, loc)
 			if err != nil {
-				return errors.Wrapf(err, "failed to parse entry %s", timeString)
+				return err
 			}
 			t.times = append(t.times, tm)
 		}
