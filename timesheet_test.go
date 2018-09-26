@@ -227,37 +227,37 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 	}{
 		{
 			name:    "invalid json",
-			input:   "testdata/invalid.json",
+			input:   "test-fixtures/invalid.json",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "invalid date",
-			input:   "testdata/invalid_date.json",
+			input:   "test-fixtures/invalid_date.json",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "invalid time",
-			input:   "testdata/invalid_time.json",
+			input:   "test-fixtures/invalid_time.json",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name:    "empty",
-			input:   "testdata/empty.json",
+			input:   "test-fixtures/empty.json",
 			want:    nil,
 			wantErr: false,
 		},
 		{
 			name:    "empty day",
-			input:   "testdata/empty_day.json",
+			input:   "test-fixtures/empty_day.json",
 			want:    nil,
 			wantErr: false,
 		},
 		{
 			name:  "one day only start",
-			input: "testdata/one_day_only_start.json",
+			input: "test-fixtures/one_day_only_start.json",
 			want: []time.Time{
 				newTime(t, "01.09.2018 10:00"),
 			},
@@ -265,7 +265,7 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:  "one day start/end",
-			input: "testdata/one_day_start_end.json",
+			input: "test-fixtures/one_day_start_end.json",
 			want: []time.Time{
 				newTime(t, "01.09.2018 10:00"),
 				newTime(t, "01.09.2018 12:00"),
@@ -274,7 +274,7 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:  "one day start/end start",
-			input: "testdata/one_day_start_end_start.json",
+			input: "test-fixtures/one_day_start_end_start.json",
 			want: []time.Time{
 				newTime(t, "01.09.2018 10:00"),
 				newTime(t, "01.09.2018 12:00"),
@@ -284,7 +284,7 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 		},
 		{
 			name:  "multiple days",
-			input: "testdata/multiple_days.json",
+			input: "test-fixtures/multiple_days.json",
 			want: []time.Time{
 				newTime(t, "01.09.2018 10:00"),
 				newTime(t, "01.09.2018 12:00"),
@@ -321,13 +321,13 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 		{
 			name:    "empty",
 			times:   []time.Time{},
-			golden:  "testdata/empty.json",
+			golden:  "test-fixtures/empty.json",
 			wantErr: false,
 		},
 		{
 			name:    "one day only start",
 			times:   []time.Time{newTime(t, "01.09.2018 10:00")},
-			golden:  "testdata/one_day_only_start.json",
+			golden:  "test-fixtures/one_day_only_start.json",
 			wantErr: false,
 		},
 		{
@@ -336,7 +336,7 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 				newTime(t, "01.09.2018 10:00"),
 				newTime(t, "01.09.2018 12:00"),
 			},
-			golden:  "testdata/one_day_start_end.json",
+			golden:  "test-fixtures/one_day_start_end.json",
 			wantErr: false,
 		},
 		{
@@ -346,7 +346,7 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 				newTime(t, "01.09.2018 12:00"),
 				newTime(t, "01.09.2018 13:00"),
 			},
-			golden:  "testdata/one_day_start_end_start.json",
+			golden:  "test-fixtures/one_day_start_end_start.json",
 			wantErr: false,
 		},
 		{
@@ -356,7 +356,7 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 				newTime(t, "01.09.2018 12:00"),
 				newTime(t, "02.09.2018 08:00"),
 			},
-			golden:  "testdata/multiple_days.json",
+			golden:  "test-fixtures/multiple_days.json",
 			wantErr: false,
 		},
 	}
@@ -398,13 +398,13 @@ func Test_loadTimeSheet(t *testing.T) {
 		},
 		{
 			name:    "returns an error if json is invalid",
-			path:    "testdata/invalid.json",
+			path:    "test-fixtures/invalid.json",
 			want:    nil,
 			wantErr: true,
 		},
 		{
 			name: "loads timesheet from json",
-			path: "testdata/one_day_only_start.json",
+			path: "test-fixtures/one_day_only_start.json",
 			want: &timeSheet{
 				times: []time.Time{
 					newTime(t, "01.09.2018 10:00"),
@@ -445,7 +445,7 @@ func Test_timeSheet_Save(t *testing.T) {
 			name:     "creates new file",
 			ts:       &timeSheet{},
 			path:     filepath.Join(tempDir, "foobar"),
-			contents: "testdata/empty.json",
+			contents: "test-fixtures/empty.json",
 			wantErr:  false,
 		},
 		{
@@ -456,7 +456,7 @@ func Test_timeSheet_Save(t *testing.T) {
 				},
 			},
 			path:     filepath.Join(tempDir, "foobar"),
-			contents: "testdata/one_day_only_start.json",
+			contents: "test-fixtures/one_day_only_start.json",
 			wantErr:  false,
 		},
 	}
@@ -499,19 +499,19 @@ func Test_timeSheet_Print(t *testing.T) {
 			name:    "default",
 			ts:      &timeSheet{times: times},
 			roundTo: defaultRoundToMinutes * time.Minute,
-			want:    "testdata/output_default.txt",
+			want:    "test-fixtures/output_default.txt",
 		},
 		{
 			name:    "round to half hours",
 			ts:      &timeSheet{times: times},
 			roundTo: 30 * time.Minute,
-			want:    "testdata/output_round_to_30_minutes.txt",
+			want:    "test-fixtures/output_round_to_30_minutes.txt",
 		},
 		{
 			name:    "not rounded",
 			ts:      &timeSheet{times: times},
 			roundTo: 0 * time.Minute,
-			want:    "testdata/output_not_rounded.txt",
+			want:    "test-fixtures/output_not_rounded.txt",
 		},
 	}
 	for _, tt := range tests {
