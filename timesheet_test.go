@@ -519,88 +519,9 @@ func Test_timeSheet_Print(t *testing.T) {
 			output := &bytes.Buffer{}
 			tt.ts.Print(output, tt.roundTo)
 			want := string(readFile(t, tt.want))
-			if diff := cmp.Diff(output.String(), want); diff != "" {
+			if diff := cmp.Diff(want, output.String()); diff != "" {
 				t.Errorf("timeSheet.Print() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}
 }
-
-// func Test_writeDays(t *testing.T) {
-// 	testTime := newTime(t, "01.09.2018 10:00")
-
-// 	days := []*day{
-// 		&day{
-// 			Date: testTime,
-// 			Entries: []*entry{
-// 				&entry{
-// 					Start: testTime,
-// 					End:   testTime.Add(time.Minute * 100),
-// 				},
-// 				&entry{
-// 					Start: testTime.Add(time.Hour * 4),
-// 				},
-// 			},
-// 		},
-// 		&day{
-// 			Date: testTime.Add(time.Hour * 24),
-// 			Entries: []*entry{
-// 				&entry{
-// 					Start: testTime.Add(time.Hour * 24),
-// 				},
-// 			},
-// 		},
-// 		&day{
-// 			Date: testTime.Add(time.Hour * 24 * 8),
-// 			Entries: []*entry{
-// 				&entry{
-// 					Start: testTime.Add(time.Hour * 24 * 8),
-// 					End:   testTime.Add(time.Hour * 25 * 8),
-// 				},
-// 			},
-// 		},
-// 	}
-
-// 	tests := []struct {
-// 		name       string
-// 		days       []*day
-// 		roundTo    time.Duration
-// 		dateFormat string
-// 		timeFormat string
-// 		want       string
-// 	}{
-// 		{
-// 			name:       "default",
-// 			days:       days,
-// 			want:       "01.09.2018  1.75  10:00-11:45 14:00-\n02.09.2018  0.00  10:00-\n\n09.09.2018  8.00  10:00-18:00 \n",
-// 			roundTo:    defaultRoundToMinutes * time.Minute,
-// 			dateFormat: dateFormat,
-// 			timeFormat: timeFormat,
-// 		},
-// 		{
-// 			name:       "round to half hours",
-// 			days:       days,
-// 			want:       "01.09.2018  1.50  10:00-11:30 14:00-\n02.09.2018  0.00  10:00-\n\n09.09.2018  8.00  10:00-18:00 \n",
-// 			roundTo:    30 * time.Minute,
-// 			dateFormat: dateFormat,
-// 			timeFormat: timeFormat,
-// 		},
-// 		{
-// 			name:       "different date format",
-// 			days:       days,
-// 			want:       "2018-01-09  1.75  10:00-11:45 14:00-\n2018-02-09  0.00  10:00-\n\n2018-09-09  8.00  10:00-18:00 \n",
-// 			roundTo:    defaultRoundToMinutes * time.Minute,
-// 			dateFormat: "2006-02-01",
-// 			timeFormat: "15:04",
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			buf := bytes.Buffer{}
-// 			writeDays(tt.days, &buf, tt.roundTo, tt.dateFormat, tt.timeFormat)
-// 			if diff := cmp.Diff(tt.want, string(buf.Bytes())); diff != "" {
-// 				t.Errorf("writeDays() differs: (-want +got)\n%s", diff)
-// 			}
-// 		})
-// 	}
-// }

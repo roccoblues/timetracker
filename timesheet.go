@@ -120,19 +120,35 @@ func (ts *timeSheet) Save(path string) error {
 }
 
 func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
-	var times []time.Time
-	var week int
-	var day time.Time
-
-	for n, t := range ts.times {
-		if day.IsZero() || sameDate(day, t) {
-			times = append(times, t)
-			day = t
-			if n != len(ts.times)-1 {
-				continue
-			}
+	// group times by day
+	var days [][]time.Time
+	var prev time.Time
+	i := 0
+	for _, t := range ts.times {
+		if prev.IsZero() {
+			prev = t
 		}
+		if !sameDate(prev, t) {
+			i++
+		}
+		if i > len(days)-1 {
+			days = append(days, []time.Time{})
+		}
+		days[i] = append(days[i], t)
+		prev = t
+	}
 
+	var week int
+
+	for _, times := range days {
+		// output newline after each week
+		_, w := times[0].ISOWeek()
+		if week > 0 && week != w {
+			fmt.Fprintln(out, "")
+		}
+		week = w
+
+		// calculate hours per day
 		var hours time.Duration
 		var start time.Time
 		for i, t := range times {
@@ -143,8 +159,10 @@ func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
 			}
 		}
 
-		fmt.Fprintf(out, "%s  %.2f ", day.Format(dateFormat), hours.Round(roundTo).Hours())
+		// output date and hours (ie. "01.09.2018 8.50")
+		fmt.Fprintf(out, "%s  %.2f ", times[0].Format(dateFormat), hours.Round(roundTo).Hours())
 
+		// output individual intervals (ie. "10:00-12:30 13:00-16:30")
 		for i, t := range times {
 			if i%2 == 0 {
 				fmt.Fprintf(out, " %s-", t.Format(timeFormat))
@@ -154,16 +172,6 @@ func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
 		}
 
 		fmt.Fprintln(out, "")
-
-		_, w := t.ISOWeek()
-		if week > 0 && week != w {
-			fmt.Fprintln(out, "")
-		}
-
-		day = t
-		week = w
-		times = []time.Time{t}
-		hours = 0
 	}
 }
 
