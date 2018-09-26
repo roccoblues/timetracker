@@ -1,6 +1,6 @@
 # tt [![Build Status](https://travis-ci.com/roccoblues/tt.svg?branch=master)](https://travis-ci.com/roccoblues/tt)
 
-Command line time tracker. Times are rounded to 15 minutes.
+Command line time tracker.
 
 ## Installation
 
@@ -10,22 +10,21 @@ go get github.com/roccoblues/tt
 
 ## Usage
 
-### Start a new time tracking interval
 ```
-$ tt start
-01.09.2018  0.00  8:00-
-```
+Usage:
+  tt [command]
 
-### Output all saved times
-```
-$ tt
-01.09.2018  0.00  8:00-
-```
+Available Commands:
 
-### Stop a time tracking interval
-```
-$ tt stop
-01.09.2018  4.00  08:00-12:00
+  start	 Start a new timetracking interval
+  stop	 Stop the current timetracking interval
+  print	 Print the current timesheet (default command)
+
+Flags:
+  -file string
+    	full path to data file (default "$HOME/.tt.json")
+  -round-to int
+    	round sum per day to minutes (default 15)
 ```
 
 ## Example output
@@ -39,12 +38,30 @@ $ tt
 07.09.2018  1.25  11:30-12:15 13:00-13:30
 
 10.09.2018  7.25  10:00-12:30 13:00-16:30 16:45-18:00
-11.09.2018  8.00  08:30-12:15 12:45-17:00
-12.09.2018  5.00  08:30-10:00 10:30-12:30 13:45-15:30
-13.09.2018  7.25  08:30-12:30 13:30-13:45 14:45-17:30
-14.09.2018  0.00  08:00-
+11.09.2018  8.00  08:30-12:14 12:40-16:59
+12.09.2018  5.00  08:37-10:05 10:32-12:25 13:45-15:29
+13.09.2018  7.25  08:26-12:34 13:33-13:42 14:39-17:37
+14.09.2018  7.00  08:03-12:55 13:17-14:48 19:45-20:16
 ```
 
 ## Edit data
 
-The data is saved in `~/.tt.json` and can be edited with your preferred editor.
+The data is saved by default in `~/.tt.json` and can be edited with your preferred editor. Example:
+
+```
+{
+  "03.09.2018": [
+    "09:00",
+    "13:30",
+    "17:30",
+    "18:15"
+  ],
+  "04.09.2018": [
+    "08:30",
+    "13:30",
+    "14:30",
+    "15:30"
+  ]
+}
+```
+
