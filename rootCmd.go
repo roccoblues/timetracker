@@ -10,7 +10,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "tt",
-	Short: "Command line time tracking tool",
+	Short: "tt is a command line time tracker",
 	Run: func(cmd *cobra.Command, args []string) {
 		ts, err := loadTimeSheet(path)
 		if err != nil {
