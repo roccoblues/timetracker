@@ -11,20 +11,23 @@ go get github.com/roccoblues/tt
 ## Usage
 
 ```
+Command line time tracking tool
+
 Usage:
+  tt [flags]
   tt [command]
 
 Available Commands:
-
-  start	 Start a new timetracking interval
-  stop	 Stop the current timetracking interval
-  print	 Print the current timesheet (default command)
+  help        Help about any command
+  start       Start a new timetracking interval
+  stop        Stop the current timetracking interval
 
 Flags:
-  -file string
-    	full path to data file (default "$HOME/.tt.json")
-  -round-to int
-    	round sum per day to minutes (default 15)
+  -f, --file string    full path to data file (default "$HOME/.tt.json")
+  -h, --help           help for tt
+  -r, --round-to int   round times to minutes (default 15)
+
+Use "tt [command] --help" for more information about a command.
 ```
 
 ## Example output
