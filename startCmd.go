@@ -28,6 +28,6 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		ts.Print(os.Stdout, time.Duration(roundToMinutes)*time.Minute)
+		ts.Print(os.Stdout)
 	},
 }

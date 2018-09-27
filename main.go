@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
 
 const timeFormat = "15:04"
 const dateFormat = "02.01.2006"
-
+const roundTo = 15 * time.Minute
 const defaultFileName = ".tt.json"
-const defaultRoundToMinutes = 15
 
 var dateTimeFormat = fmt.Sprintf("%s %s", dateFormat, timeFormat)
 
 // flags
 var path string
-var roundToMinutes int
 
 func main() {
 	home, err := homedir.Dir()
@@ -29,7 +28,6 @@ func main() {
 	defaultPath := filepath.Join(home, defaultFileName)
 
 	rootCmd.PersistentFlags().StringVarP(&path, "file", "f", defaultPath, "full path to data file")
-	rootCmd.PersistentFlags().IntVarP(&roundToMinutes, "round-to", "r", defaultRoundToMinutes, "round times to minutes")
 
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)

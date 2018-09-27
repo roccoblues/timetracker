@@ -119,7 +119,7 @@ func (ts *timeSheet) Save(path string) error {
 	return nil
 }
 
-func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
+func (ts *timeSheet) Print(out io.Writer) {
 	// group times by day
 	var days [][]time.Time
 	var prev time.Time
@@ -134,11 +134,12 @@ func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
 		if i > len(days)-1 {
 			days = append(days, []time.Time{})
 		}
-		days[i] = append(days[i], t)
+		days[i] = append(days[i], t.Round(roundTo))
 		prev = t
 	}
 
 	var week int
+	var totalHours time.Duration
 
 	for _, times := range days {
 		// output newline after each week
@@ -160,7 +161,7 @@ func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
 		}
 
 		// output date and hours (ie. "01.09.2018 8.50")
-		fmt.Fprintf(out, "%s  %.2f ", times[0].Format(dateFormat), hours.Round(roundTo).Hours())
+		fmt.Fprintf(out, "%s  %.2f ", times[0].Format(dateFormat), hours.Hours())
 
 		// output individual intervals (ie. "10:00-12:30 13:00-16:30")
 		for i, t := range times {
@@ -171,8 +172,12 @@ func (ts *timeSheet) Print(out io.Writer, roundTo time.Duration) {
 			}
 		}
 
+		totalHours += hours
+
 		fmt.Fprintln(out, "")
 	}
+
+	fmt.Fprintf(out, "\nTotal: %.2f\n", totalHours.Hours())
 }
 
 func sameDate(a, b time.Time) bool {

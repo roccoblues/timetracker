@@ -490,34 +490,20 @@ func Test_timeSheet_Print(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		ts      *timeSheet
-		roundTo time.Duration
-		want    string
+		name string
+		ts   *timeSheet
+		want string
 	}{
 		{
-			name:    "default",
-			ts:      &timeSheet{times: times},
-			roundTo: defaultRoundToMinutes * time.Minute,
-			want:    "test-fixtures/output_default.txt",
-		},
-		{
-			name:    "round to half hours",
-			ts:      &timeSheet{times: times},
-			roundTo: 30 * time.Minute,
-			want:    "test-fixtures/output_round_to_30_minutes.txt",
-		},
-		{
-			name:    "not rounded",
-			ts:      &timeSheet{times: times},
-			roundTo: 0 * time.Minute,
-			want:    "test-fixtures/output_not_rounded.txt",
+			name: "default",
+			ts:   &timeSheet{times: times},
+			want: "test-fixtures/output_default.txt",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output := &bytes.Buffer{}
-			tt.ts.Print(output, tt.roundTo)
+			tt.ts.Print(output)
 			want := string(readFile(t, tt.want))
 			if diff := cmp.Diff(want, output.String()); diff != "" {
 				t.Errorf("timeSheet.Print() differs: (-want +got)\n%s", diff)

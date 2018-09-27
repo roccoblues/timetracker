@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -18,6 +17,6 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		ts.Print(os.Stdout, time.Duration(roundToMinutes)*time.Minute)
+		ts.Print(os.Stdout)
 	},
 }
