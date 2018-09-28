@@ -12,7 +12,7 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start a new timetracking interval",
 	Run: func(cmd *cobra.Command, args []string) {
-		ts, err := loadTimeSheet(path)
+		ts, err := loadTimeSheet(file)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -23,7 +23,7 @@ var startCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := ts.Save(path); err != nil {
+		if err := ts.Save(file); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

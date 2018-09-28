@@ -17,7 +17,7 @@ const defaultFileName = ".tt.json"
 var dateTimeFormat = fmt.Sprintf("%s %s", dateFormat, timeFormat)
 
 // flags
-var path string
+var file string
 
 func main() {
 	home, err := homedir.Dir()
@@ -27,7 +27,7 @@ func main() {
 	}
 	defaultPath := filepath.Join(home, defaultFileName)
 
-	rootCmd.PersistentFlags().StringVarP(&path, "file", "f", defaultPath, "full path to data file")
+	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", defaultPath, "path to data `FILE`")
 
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)
