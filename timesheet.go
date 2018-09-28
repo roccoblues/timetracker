@@ -31,7 +31,7 @@ func loadTimeSheet(path string) (*timeSheet, error) {
 }
 
 func (ts *timeSheet) Start(start time.Time) error {
-	times := ts.TimesForDay(start)
+	times := ts.timesWithDate(start)
 
 	// an uneven number of times means we already started an interval
 	if len(times)%2 != 0 {
@@ -51,7 +51,7 @@ func (ts *timeSheet) Start(start time.Time) error {
 }
 
 func (ts *timeSheet) End(end time.Time) error {
-	times := ts.TimesForDay(end)
+	times := ts.timesWithDate(end)
 
 	// an even number of times means we haven't started an interval
 	if len(times)%2 == 0 {
@@ -73,12 +73,12 @@ func (ts *timeSheet) End(end time.Time) error {
 func (ts *timeSheet) MarshalJSON() ([]byte, error) {
 	data := map[string][]string{}
 
-	for _, t := range ts.times {
-		date := t.Format(dateFormat)
-		if _, exists := data[date]; !exists {
-			data[date] = []string{}
+	for _, dateTime := range ts.dates() {
+		date := dateTime.Format(dateFormat)
+		data[date] = []string{}
+		for _, t := range ts.timesWithDate(dateTime) {
+			data[date] = append(data[date], t.Format(timeFormat))
 		}
-		data[date] = append(data[date], t.Format(timeFormat))
 	}
 
 	return json.MarshalIndent(&data, "", "  ")
@@ -90,17 +90,11 @@ func (ts *timeSheet) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 
-	dates := make([]string, 0, len(decoded))
-	for d := range decoded {
-		dates = append(dates, d)
-	}
-	sort.Strings(dates)
-
 	loc := time.Now().Location()
 
-	for _, d := range dates {
-		for _, e := range decoded[d] {
-			timeString := fmt.Sprintf("%s %s", d, e)
+	for date, times := range decoded {
+		for _, t := range times {
+			timeString := fmt.Sprintf("%s %s", date, t)
 			tm, err := time.ParseInLocation(dateTimeFormat, timeString, loc)
 			if err != nil {
 				return err
@@ -108,6 +102,8 @@ func (ts *timeSheet) UnmarshalJSON(bytes []byte) error {
 			ts.times = append(ts.times, tm)
 		}
 	}
+
+	sort.Slice(ts.times, func(i, j int) bool { return ts.times[i].Before(ts.times[j]) })
 
 	return nil
 }
@@ -126,39 +122,28 @@ func (ts *timeSheet) Save(path string) error {
 }
 
 func (ts *timeSheet) Print(out io.Writer) {
-	// group times by day
-	var days [][]time.Time
-	var prev time.Time
-	i := 0
-	for _, t := range ts.times {
-		if prev.IsZero() {
-			prev = t
-		}
-		if !sameDate(prev, t) {
-			i++
-		}
-		if i > len(days)-1 {
-			days = append(days, []time.Time{})
-		}
-		days[i] = append(days[i], t.Round(roundTo))
-		prev = t
-	}
-
 	var week int
 	var totalHours time.Duration
 
-	for _, times := range days {
+	for _, dateTime := range ts.dates() {
 		// output newline after each week
-		_, w := times[0].ISOWeek()
+		_, w := dateTime.ISOWeek()
 		if week > 0 && week != w {
 			fmt.Fprintln(out, "")
 		}
 		week = w
 
+		timesForDate := ts.timesWithDate(dateTime)
+
+		// round times
+		for i, t := range timesForDate {
+			timesForDate[i] = t.Round(roundTo)
+		}
+
 		// calculate hours per day
 		var hours time.Duration
 		var start time.Time
-		for i, t := range times {
+		for i, t := range timesForDate {
 			if i%2 == 0 {
 				start = t
 			} else {
@@ -167,10 +152,10 @@ func (ts *timeSheet) Print(out io.Writer) {
 		}
 
 		// output date and hours (ie. "01.09.2018 8.50")
-		fmt.Fprintf(out, "%s  %.2f ", times[0].Format(dateFormat), hours.Hours())
+		fmt.Fprintf(out, "%s  %.2f ", dateTime.Format(dateFormat), hours.Hours())
 
 		// output individual intervals (ie. "10:00-12:30 13:00-16:30")
-		for i, t := range times {
+		for i, t := range timesForDate {
 			if i%2 == 0 {
 				fmt.Fprintf(out, " %s-", t.Format(timeFormat))
 			} else {
@@ -186,15 +171,30 @@ func (ts *timeSheet) Print(out io.Writer) {
 	fmt.Fprintf(out, "\nTotal: %.2f\n", totalHours.Hours())
 }
 
-func (ts *timeSheet) TimesForDay(day time.Time) []time.Time {
+// timesWithDate returns all times in the timesheet with the same date as the given time.
+func (ts *timeSheet) timesWithDate(date time.Time) []time.Time {
 	var times []time.Time
 	for _, t := range ts.times {
-		if sameDate(day, t) {
+		if sameDate(date, t) {
 			times = append(times, t)
 		}
 	}
 
 	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
+
+	return times
+}
+
+// dates returns a list of times with unique dates in the timesheet.
+func (ts *timeSheet) dates() []time.Time {
+	var prev time.Time
+	var times []time.Time
+	for _, t := range ts.times {
+		if !sameDate(prev, t) {
+			times = append(times, t)
+		}
+		prev = t
+	}
 
 	return times
 }
