@@ -129,6 +129,19 @@ func Test_timeSheet_Start(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name:  "start earlier as end",
+			start: newTime(t, "01.09.2018 08:00"),
+			before: []time.Time{
+				newTime(t, "01.09.2018 09:00"),
+				newTime(t, "01.09.2018 16:00"),
+			},
+			after: []time.Time{
+				newTime(t, "01.09.2018 09:00"),
+				newTime(t, "01.09.2018 16:00"),
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -201,6 +214,17 @@ func Test_timeSheet_End(t *testing.T) {
 				newTime(t, "02.09.2018 16:00"),
 			},
 			wantErr: false,
+		},
+		{
+			name: "end ealier as start",
+			end:  newTime(t, "01.09.2018 08:00"),
+			before: []time.Time{
+				newTime(t, "01.09.2018 09:00"),
+			},
+			after: []time.Time{
+				newTime(t, "01.09.2018 09:00"),
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

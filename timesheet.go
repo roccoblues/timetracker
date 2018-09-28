@@ -31,15 +31,23 @@ func loadTimeSheet(path string) (*timeSheet, error) {
 }
 
 func (ts *timeSheet) Start(start time.Time) error {
+	var last time.Time
 	c := 0
 	for _, t := range ts.times {
 		if sameDate(start, t) {
 			c++
+			if t.After(last) {
+				last = t
+			}
 		}
 	}
 
 	if c%2 != 0 {
 		return fmt.Errorf("already started")
+	}
+
+	if start.Before(last) {
+		return fmt.Errorf("start time %s is ealier as last end time %s", start.Format(timeFormat), last.Format(timeFormat))
 	}
 
 	ts.times = append(ts.times, start)
@@ -48,15 +56,23 @@ func (ts *timeSheet) Start(start time.Time) error {
 }
 
 func (ts *timeSheet) End(end time.Time) error {
+	var last time.Time
 	c := 0
 	for _, t := range ts.times {
 		if sameDate(end, t) {
 			c++
+			if t.After(last) {
+				last = t
+			}
 		}
 	}
 
 	if c%2 == 0 {
 		return fmt.Errorf("not started")
+	}
+
+	if end.Before(last) {
+		return fmt.Errorf("end time %s is earlier as last start time %s", end.Format(timeFormat), last.Format(timeFormat))
 	}
 
 	ts.times = append(ts.times, end)
