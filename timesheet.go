@@ -31,23 +31,18 @@ func loadTimeSheet(path string) (*timeSheet, error) {
 }
 
 func (ts *timeSheet) Start(start time.Time) error {
-	var last time.Time
-	c := 0
-	for _, t := range ts.times {
-		if sameDate(start, t) {
-			c++
-			if t.After(last) {
-				last = t
-			}
-		}
-	}
+	times := ts.TimesForDay(start)
 
-	if c%2 != 0 {
+	// an uneven number of times means we already started an interval
+	if len(times)%2 != 0 {
 		return fmt.Errorf("already started")
 	}
 
-	if start.Before(last) {
-		return fmt.Errorf("start time %s is ealier as last end time %s", start.Format(timeFormat), last.Format(timeFormat))
+	if len(times) > 0 {
+		last := times[len(times)-1]
+		if start.Before(last) {
+			return fmt.Errorf("start time %s is ealier as last end time %s", start.Format(timeFormat), last.Format(timeFormat))
+		}
 	}
 
 	ts.times = append(ts.times, start)
@@ -56,23 +51,18 @@ func (ts *timeSheet) Start(start time.Time) error {
 }
 
 func (ts *timeSheet) End(end time.Time) error {
-	var last time.Time
-	c := 0
-	for _, t := range ts.times {
-		if sameDate(end, t) {
-			c++
-			if t.After(last) {
-				last = t
-			}
-		}
-	}
+	times := ts.TimesForDay(end)
 
-	if c%2 == 0 {
+	// an even number of times means we haven't started an interval
+	if len(times)%2 == 0 {
 		return fmt.Errorf("not started")
 	}
 
-	if end.Before(last) {
-		return fmt.Errorf("end time %s is earlier as last start time %s", end.Format(timeFormat), last.Format(timeFormat))
+	if len(times) > 0 {
+		last := times[len(times)-1]
+		if end.Before(last) {
+			return fmt.Errorf("end time %s is earlier as last start time %s", end.Format(timeFormat), last.Format(timeFormat))
+		}
 	}
 
 	ts.times = append(ts.times, end)
@@ -194,6 +184,19 @@ func (ts *timeSheet) Print(out io.Writer) {
 	}
 
 	fmt.Fprintf(out, "\nTotal: %.2f\n", totalHours.Hours())
+}
+
+func (ts *timeSheet) TimesForDay(day time.Time) []time.Time {
+	var times []time.Time
+	for _, t := range ts.times {
+		if sameDate(day, t) {
+			times = append(times, t)
+		}
+	}
+
+	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
+
+	return times
 }
 
 func sameDate(a, b time.Time) bool {
