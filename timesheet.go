@@ -201,3 +201,8 @@ func sameDate(a, b time.Time) bool {
 
 	return aDay == bDay && aMonth == bMonth && aYear == bYear
 }
+
+func parseTime(value string) (time.Time, error) {
+	dateTime := fmt.Sprintf("%s %s", time.Now().Format(dateFormat), value)
+	return time.ParseInLocation(dateTimeFormat, dateTime, time.Now().Location())
+}

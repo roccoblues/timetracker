@@ -9,7 +9,7 @@ import (
 )
 
 var stopCmd = &cobra.Command{
-	Use:   "stop",
+	Use:   "stop [time]",
 	Short: "Stop the current timetracking interval",
 	Run: func(cmd *cobra.Command, args []string) {
 		ts, err := loadTimeSheet(file)
@@ -18,7 +18,16 @@ var stopCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		if err := ts.End(time.Now()); err != nil {
+		endTime := time.Now()
+		if len(args) > 0 {
+			endTime, err = parseTime(args[0])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
+
+		if err := ts.End(endTime); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
