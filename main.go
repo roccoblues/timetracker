@@ -9,10 +9,12 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const timeFormat = "15:04"
-const dateFormat = "02.01.2006"
-const roundTo = 15 * time.Minute
-const defaultFileName = ".tt.json"
+const (
+	timeFormat      = "15:04"
+	dateFormat      = "02.01.2006"
+	roundTo         = 15 * time.Minute
+	defaultFileName = ".tt.json"
+)
 
 var dateTimeFormat = fmt.Sprintf("%s %s", dateFormat, timeFormat)
 
