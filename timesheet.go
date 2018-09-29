@@ -137,21 +137,21 @@ func (ts *timeSheet) Save(path string) error {
 func (ts *timeSheet) Print(out io.Writer) {
 	// group times by day
 	var days [][]time.Time
+	var times []time.Time
 	var prev time.Time
-	i := 0
+
 	for _, t := range ts.times {
 		if prev.IsZero() {
 			prev = t
 		}
 		if !sameDate(prev, t) {
-			i++
+			days = append(days, times)
+			times = []time.Time{}
 		}
-		if i > len(days)-1 {
-			days = append(days, []time.Time{})
-		}
-		days[i] = append(days[i], t.Round(roundTo))
+		times = append(times, t.Round(roundTo))
 		prev = t
 	}
+	days = append(days, times)
 
 	var week int
 	var totalHours time.Duration
