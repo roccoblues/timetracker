@@ -22,10 +22,9 @@ Available Commands:
   stop        Stop the current timetracking interval
 
 Flags:
-  -f, --file FILE   path to data FILE (default "/Users/dennis/.tt.json")
-  -h, --help        help for tt
-
-Use "tt [command] --help" for more information about a command.
+  -f, --file FILE     path to data FILE (default "/Users/dennis/.tt.json")
+  -h, --help          help for tt
+  -m, --month MONTH   output MONTH
 ```
 
 ## Example output
