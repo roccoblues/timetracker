@@ -135,12 +135,17 @@ func (ts *timeSheet) Save(path string) error {
 }
 
 func (ts *timeSheet) Print(out io.Writer) {
+	currentMonth := time.Now().Month()
+
 	// group times by day
 	var days [][]time.Time
 	var times []time.Time
 	var prev time.Time
 
 	for _, t := range ts.times {
+		if t.Month() != currentMonth {
+			continue
+		}
 		if prev.IsZero() {
 			prev = t
 		}

@@ -500,6 +500,9 @@ func Test_timeSheet_Save(t *testing.T) {
 
 func Test_timeSheet_Print(t *testing.T) {
 	times := []time.Time{
+		newTime(t, "28.08.2018 08:00"),
+		newTime(t, "28.08.2018 12:00"),
+
 		newTime(t, "01.09.2018 10:00"),
 		newTime(t, "01.09.2018 11:42"),
 		newTime(t, "01.09.2018 14:00"),
