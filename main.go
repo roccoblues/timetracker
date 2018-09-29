@@ -19,7 +19,10 @@ const (
 var dateTimeFormat = fmt.Sprintf("%s %s", dateFormat, timeFormat)
 
 // flags
-var file string
+var (
+	file  string
+	month int
+)
 
 func main() {
 	home, err := homedir.Dir()
@@ -30,6 +33,7 @@ func main() {
 	defaultPath := filepath.Join(home, defaultFileName)
 
 	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", defaultPath, "path to data `FILE`")
+	rootCmd.Flags().IntVarP(&month, "month", "m", 0, "output `MONTH`")
 
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(stopCmd)

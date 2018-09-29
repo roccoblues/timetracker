@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,8 +22,17 @@ func readFile(t *testing.T, path string) []byte {
 	return bytes
 }
 
-func newTime(t *testing.T, str string) time.Time {
-	tm, err := time.ParseInLocation(dateTimeFormat, str, time.Now().Location())
+func newDateTime(t *testing.T, value string) time.Time {
+	tm, err := time.ParseInLocation(dateTimeFormat, value, time.Now().Location())
+	if err != nil {
+		t.Fatal(err)
+	}
+	return tm
+}
+
+func newTime(t *testing.T, value string) time.Time {
+	dateTime := fmt.Sprintf("%s %s", time.Now().Format(dateFormat), value)
+	tm, err := time.ParseInLocation(dateTimeFormat, dateTime, time.Now().Location())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +40,7 @@ func newTime(t *testing.T, str string) time.Time {
 }
 
 func Test_sameDate(t *testing.T) {
-	testTime := newTime(t, "01.09.2018 10:00")
+	testTime := newDateTime(t, "01.09.2018 10:00")
 
 	tests := []struct {
 		name string
@@ -71,74 +81,74 @@ func Test_timeSheet_Start(t *testing.T) {
 	}{
 		{
 			name:   "first entry",
-			start:  newTime(t, "01.09.2018 10:00"),
+			start:  newDateTime(t, "01.09.2018 10:00"),
 			before: []time.Time{},
 			after: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 10:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "second entry",
-			start: newTime(t, "01.09.2018 13:00"),
+			start: newDateTime(t, "01.09.2018 13:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "01.09.2018 13:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 13:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "new day",
-			start: newTime(t, "02.09.2018 08:00"),
+			start: newDateTime(t, "02.09.2018 08:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "02.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "02.09.2018 08:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "new day previous not stopped",
-			start: newTime(t, "02.09.2018 08:00"),
+			start: newDateTime(t, "02.09.2018 08:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "02.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "02.09.2018 08:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:  "already started",
-			start: newTime(t, "01.09.2018 16:00"),
+			start: newDateTime(t, "01.09.2018 16:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
 			},
 			wantErr: true,
 		},
 		{
 			name:  "start earlier as end",
-			start: newTime(t, "01.09.2018 08:00"),
+			start: newDateTime(t, "01.09.2018 08:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 09:00"),
-				newTime(t, "01.09.2018 16:00"),
+				newDateTime(t, "01.09.2018 09:00"),
+				newDateTime(t, "01.09.2018 16:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 09:00"),
-				newTime(t, "01.09.2018 16:00"),
+				newDateTime(t, "01.09.2018 09:00"),
+				newDateTime(t, "01.09.2018 16:00"),
 			},
 			wantErr: true,
 		},
@@ -168,61 +178,61 @@ func Test_timeSheet_End(t *testing.T) {
 	}{
 		{
 			name: "end first entry",
-			end:  newTime(t, "01.09.2018 12:00"),
+			end:  newDateTime(t, "01.09.2018 12:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 08:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "end second day",
-			end:  newTime(t, "02.09.2018 16:00"),
+			end:  newDateTime(t, "02.09.2018 16:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "02.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "02.09.2018 10:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "02.09.2018 10:00"),
-				newTime(t, "02.09.2018 16:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "02.09.2018 10:00"),
+				newDateTime(t, "02.09.2018 16:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name:    "not started",
-			end:     newTime(t, "01.09.2018 16:00"),
+			end:     newDateTime(t, "01.09.2018 16:00"),
 			before:  []time.Time{},
 			after:   []time.Time{},
 			wantErr: true,
 		},
 		{
 			name: "new day previous not stopped",
-			end:  newTime(t, "02.09.2018 16:00"),
+			end:  newDateTime(t, "02.09.2018 16:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "02.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "02.09.2018 10:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 08:00"),
-				newTime(t, "02.09.2018 10:00"),
-				newTime(t, "02.09.2018 16:00"),
+				newDateTime(t, "01.09.2018 08:00"),
+				newDateTime(t, "02.09.2018 10:00"),
+				newDateTime(t, "02.09.2018 16:00"),
 			},
 			wantErr: false,
 		},
 		{
 			name: "end ealier as start",
-			end:  newTime(t, "01.09.2018 08:00"),
+			end:  newDateTime(t, "01.09.2018 08:00"),
 			before: []time.Time{
-				newTime(t, "01.09.2018 09:00"),
+				newDateTime(t, "01.09.2018 09:00"),
 			},
 			after: []time.Time{
-				newTime(t, "01.09.2018 09:00"),
+				newDateTime(t, "01.09.2018 09:00"),
 			},
 			wantErr: true,
 		},
@@ -283,7 +293,7 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 			name:  "one day only start",
 			input: "test-fixtures/one_day_only_start.json",
 			want: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 10:00"),
 			},
 			wantErr: false,
 		},
@@ -291,8 +301,8 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 			name:  "one day start/end",
 			input: "test-fixtures/one_day_start_end.json",
 			want: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
 			},
 			wantErr: false,
 		},
@@ -300,9 +310,9 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 			name:  "one day start/end start",
 			input: "test-fixtures/one_day_start_end_start.json",
 			want: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "01.09.2018 13:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 13:00"),
 			},
 			wantErr: false,
 		},
@@ -310,9 +320,9 @@ func Test_timeSheet_UnmarshalJSON(t *testing.T) {
 			name:  "multiple days",
 			input: "test-fixtures/multiple_days.json",
 			want: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "02.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "02.09.2018 08:00"),
 			},
 			wantErr: false,
 		},
@@ -350,15 +360,15 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 		},
 		{
 			name:    "one day only start",
-			times:   []time.Time{newTime(t, "01.09.2018 10:00")},
+			times:   []time.Time{newDateTime(t, "01.09.2018 10:00")},
 			golden:  "test-fixtures/one_day_only_start.json",
 			wantErr: false,
 		},
 		{
 			name: "one day start/end",
 			times: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
 			},
 			golden:  "test-fixtures/one_day_start_end.json",
 			wantErr: false,
@@ -366,9 +376,9 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 		{
 			name: "one day start/end start",
 			times: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "01.09.2018 13:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "01.09.2018 13:00"),
 			},
 			golden:  "test-fixtures/one_day_start_end_start.json",
 			wantErr: false,
@@ -376,9 +386,9 @@ func Test_timeSheet_MarshalJSON(t *testing.T) {
 		{
 			name: "multiple days",
 			times: []time.Time{
-				newTime(t, "01.09.2018 10:00"),
-				newTime(t, "01.09.2018 12:00"),
-				newTime(t, "02.09.2018 08:00"),
+				newDateTime(t, "01.09.2018 10:00"),
+				newDateTime(t, "01.09.2018 12:00"),
+				newDateTime(t, "02.09.2018 08:00"),
 			},
 			golden:  "test-fixtures/multiple_days.json",
 			wantErr: false,
@@ -431,7 +441,7 @@ func Test_loadTimeSheet(t *testing.T) {
 			path: "test-fixtures/one_day_only_start.json",
 			want: &timeSheet{
 				times: []time.Time{
-					newTime(t, "01.09.2018 10:00"),
+					newDateTime(t, "01.09.2018 10:00"),
 				},
 			},
 			wantErr: false,
@@ -476,7 +486,7 @@ func Test_timeSheet_Save(t *testing.T) {
 			name: "overwrites existing file",
 			ts: &timeSheet{
 				times: []time.Time{
-					newTime(t, "01.09.2018 10:00"),
+					newDateTime(t, "01.09.2018 10:00"),
 				},
 			},
 			path:     filepath.Join(tempDir, "foobar"),
@@ -499,22 +509,6 @@ func Test_timeSheet_Save(t *testing.T) {
 }
 
 func Test_timeSheet_Print(t *testing.T) {
-	times := []time.Time{
-		newTime(t, "28.08.2018 08:00"),
-		newTime(t, "28.08.2018 12:00"),
-
-		newTime(t, "01.09.2018 10:00"),
-		newTime(t, "01.09.2018 11:42"),
-		newTime(t, "01.09.2018 14:00"),
-
-		newTime(t, "02.09.2018 08:00"),
-		newTime(t, "02.09.2018 16:00"),
-
-		newTime(t, "09.09.2018 08:00"),
-		newTime(t, "09.09.2018 12:24"),
-		newTime(t, "09.09.2018 13:12"),
-		newTime(t, "09.09.2018 17:57"),
-	}
 
 	tests := []struct {
 		name string
@@ -522,18 +516,77 @@ func Test_timeSheet_Print(t *testing.T) {
 		want string
 	}{
 		{
-			name: "default",
-			ts:   &timeSheet{times: times},
-			want: "test-fixtures/output_default.txt",
+			name: "empty",
+			ts: &timeSheet{
+				times: []time.Time{
+					newTime(t, "08:00"),
+					newTime(t, "12:00"),
+				},
+			},
+			want: fmt.Sprintf("%s  4.00  08:00-12:00\n\nTotal: 4.00\n", time.Now().Format(dateFormat)),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output := &bytes.Buffer{}
 			tt.ts.Print(output)
+			if diff := cmp.Diff(tt.want, output.String()); diff != "" {
+				t.Errorf("timeSheet.PrintMonth() differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_timeSheet_PrintMonth(t *testing.T) {
+	times := []time.Time{
+		newDateTime(t, "28.08.2018 08:00"),
+		newDateTime(t, "28.08.2018 12:00"),
+
+		newDateTime(t, "01.09.2018 10:00"),
+		newDateTime(t, "01.09.2018 11:42"),
+		newDateTime(t, "01.09.2018 14:00"),
+
+		newDateTime(t, "02.09.2018 08:00"),
+		newDateTime(t, "02.09.2018 16:00"),
+
+		newDateTime(t, "09.09.2018 08:00"),
+		newDateTime(t, "09.09.2018 12:24"),
+		newDateTime(t, "09.09.2018 13:12"),
+		newDateTime(t, "09.09.2018 17:57"),
+	}
+
+	tests := []struct {
+		name  string
+		month time.Month
+		ts    *timeSheet
+		want  string
+	}{
+		{
+			name:  "empty",
+			month: 7,
+			ts:    &timeSheet{times: times},
+			want:  "test-fixtures/output_july.txt",
+		},
+		{
+			name:  "august",
+			month: 8,
+			ts:    &timeSheet{times: times},
+			want:  "test-fixtures/output_august.txt",
+		},
+		{
+			name:  "september",
+			month: 9,
+			ts:    &timeSheet{times: times},
+			want:  "test-fixtures/output_september.txt",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := &bytes.Buffer{}
+			tt.ts.PrintMonth(tt.month, output)
 			want := string(readFile(t, tt.want))
 			if diff := cmp.Diff(want, output.String()); diff != "" {
-				t.Errorf("timeSheet.Print() differs: (-want +got)\n%s", diff)
+				t.Errorf("timeSheet.PrintMonth() differs: (-want +got)\n%s", diff)
 			}
 		})
 	}

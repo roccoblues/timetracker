@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -17,6 +18,10 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		ts.Print(os.Stdout)
+		if month > 0 {
+			ts.PrintMonth(time.Month(month), os.Stdout)
+		} else {
+			ts.Print(os.Stdout)
+		}
 	},
 }

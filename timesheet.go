@@ -135,15 +135,17 @@ func (ts *timeSheet) Save(path string) error {
 }
 
 func (ts *timeSheet) Print(out io.Writer) {
-	currentMonth := time.Now().Month()
+	ts.PrintMonth(time.Now().Month(), out)
+}
 
+func (ts *timeSheet) PrintMonth(month time.Month, out io.Writer) {
 	// group times by day
 	var days [][]time.Time
 	var times []time.Time
 	var prev time.Time
 
 	for _, t := range ts.times {
-		if t.Month() != currentMonth {
+		if t.Month() != month {
 			continue
 		}
 		if prev.IsZero() {
@@ -156,11 +158,16 @@ func (ts *timeSheet) Print(out io.Writer) {
 		times = append(times, t.Round(roundTo))
 		prev = t
 	}
-	days = append(days, times)
+	if len(times) > 0 {
+		days = append(days, times)
+	}
+
+	if len(days) == 0 {
+		return
+	}
 
 	var week int
 	var totalHours time.Duration
-
 	for _, times := range days {
 		// output newline after each week
 		_, w := times[0].ISOWeek()
