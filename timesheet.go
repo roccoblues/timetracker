@@ -95,29 +95,28 @@ func (ts *timeSheet) MarshalJSON() ([]byte, error) {
 }
 
 func (ts *timeSheet) UnmarshalJSON(bytes []byte) error {
+	loc := time.Now().Location()
+
 	var decoded map[string][]string
 	if err := json.Unmarshal(bytes, &decoded); err != nil {
 		return err
 	}
 
-	dates := make([]string, 0, len(decoded))
-	for d := range decoded {
-		dates = append(dates, d)
-	}
-	sort.Strings(dates)
-
-	loc := time.Now().Location()
-
-	for _, d := range dates {
-		for _, e := range decoded[d] {
-			timeString := fmt.Sprintf("%s %s", d, e)
-			tm, err := time.ParseInLocation(dateTimeFormat, timeString, loc)
+	var times []time.Time
+	for dateStr, timeStrs := range decoded {
+		for _, t := range timeStrs {
+			dateTime := fmt.Sprintf("%s %s", dateStr, t)
+			tm, err := time.ParseInLocation(dateTimeFormat, dateTime, loc)
 			if err != nil {
 				return err
 			}
-			ts.times = append(ts.times, tm)
+			times = append(times, tm)
 		}
 	}
+
+	sort.Slice(times, func(i, j int) bool { return times[i].Before(times[j]) })
+
+	ts.times = times
 
 	return nil
 }
