@@ -36,9 +36,7 @@ func (ts *timeSheet) Start(start time.Time) error {
 	for _, t := range ts.times {
 		if sameDate(start, t) {
 			c++
-			if t.After(last) {
-				last = t
-			}
+			last = t
 		}
 	}
 
@@ -61,9 +59,7 @@ func (ts *timeSheet) End(end time.Time) error {
 	for _, t := range ts.times {
 		if sameDate(end, t) {
 			c++
-			if t.After(last) {
-				last = t
-			}
+			last = t
 		}
 	}
 
