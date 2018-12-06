@@ -1,6 +1,6 @@
 # tt [![Build Status](https://travis-ci.com/roccoblues/tt.svg?branch=master)](https://travis-ci.com/roccoblues/tt)
 
-tt is a command line time tracker. The times in the output are rounded to 15 minute intervals.
+tt is a simple command line time tracker. The times in the output are rounded to 15 minute intervals.
 
 
 ## Installation
@@ -57,3 +57,12 @@ The data is saved by default in `~/.tt.json` and can be edited with your preferr
 }
 ```
 
+## FAQ
+
+### Help, I forgot to start/stop the timer.
+
+If you just forgot the most recent event you can call `start`/`stop` with an optional time to fix it. If it's already the next day you need to manually [edit the data file](#edit-data).
+
+### I need to track times for different client/projects.
+
+Just use a different file `-f FILE` for each client.
