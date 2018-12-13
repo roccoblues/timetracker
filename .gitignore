@@ -1,4 +1,4 @@
-
+.gometalinter-*
 c.out
 coverage.html
 tt
