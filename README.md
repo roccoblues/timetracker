@@ -23,7 +23,7 @@ Available Commands:
 
 Flags:
   -d, --date-format FORMAT   parse and write dates with FORMAT (default "02.01.2006")
-  -f, --file FILE             path to data FILE (default "/home/dennis/.tt.json")
+  -f, --file FILE             path to data FILE (default "$HOME/.tt.json")
   -h, --help                 help for tt
   -m, --month MONTH          output MONTH (default current)
   -r, --round-to MINUTES     round to MINUTES (default 15)
