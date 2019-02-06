@@ -7,25 +7,11 @@ import (
 )
 
 func print(times []time.Time, roundTo time.Duration, dateFormat, timeFormat string, out io.Writer) {
-	// group times by day
-	var days [][]time.Time
-	var dayTimes []time.Time
-	var prev time.Time
+	for i, t := range times {
+		times[i] = t.Round(roundTo)
+	}
 
-	for _, t := range times {
-		if prev.IsZero() {
-			prev = t
-		}
-		if !sameDate(prev, t) {
-			days = append(days, dayTimes)
-			dayTimes = []time.Time{}
-		}
-		dayTimes = append(dayTimes, t.Round(roundTo))
-		prev = t
-	}
-	if len(dayTimes) > 0 {
-		days = append(days, dayTimes)
-	}
+	days := groupTimesByDay(times)
 
 	if len(days) == 0 {
 		return
@@ -41,16 +27,7 @@ func print(times []time.Time, roundTo time.Duration, dateFormat, timeFormat stri
 		}
 		week = w
 
-		// calculate hours per day
-		var hours time.Duration
-		var start time.Time
-		for i, t := range times {
-			if i%2 == 0 {
-				start = t
-			} else {
-				hours += t.Sub(start)
-			}
-		}
+		hours := calculateHours(times)
 
 		// output date and hours (ie. "01.09.2018 8.50")
 		fmt.Fprintf(out, "%s  %.2f ", times[0].Format(dateFormat), hours.Hours())
@@ -70,4 +47,42 @@ func print(times []time.Time, roundTo time.Duration, dateFormat, timeFormat stri
 	}
 
 	fmt.Fprintf(out, "\nTotal: %.2f\n", totalHours.Hours())
+}
+
+func groupTimesByDay(times []time.Time) [][]time.Time {
+	var days [][]time.Time
+	var dayTimes []time.Time
+	var prev time.Time
+
+	for _, t := range times {
+		if prev.IsZero() {
+			prev = t
+		}
+		if !sameDate(prev, t) {
+			days = append(days, dayTimes)
+			dayTimes = []time.Time{}
+		}
+		dayTimes = append(dayTimes, t)
+		prev = t
+	}
+	if len(dayTimes) > 0 {
+		days = append(days, dayTimes)
+	}
+
+	return days
+}
+
+func calculateHours(times []time.Time) time.Duration {
+	var hours time.Duration
+
+	var start time.Time
+	for i, t := range times {
+		if i%2 == 0 {
+			start = t
+		} else {
+			hours += t.Sub(start)
+		}
+	}
+
+	return hours
 }
