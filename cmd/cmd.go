@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// New returns a cobra rootCmd configured with the given config.
 func New(cfg *Config) *cobra.Command {
 	rootCmd := newRootCommand(cfg)
 
