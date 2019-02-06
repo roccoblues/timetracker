@@ -11,8 +11,6 @@ import (
 
 const defaultFileName = ".tt.json"
 
-// var dateTimeFormat =
-
 func main() {
 	home, err := homedir.Dir()
 	if err != nil {
