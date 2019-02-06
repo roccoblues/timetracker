@@ -22,9 +22,14 @@ Available Commands:
   stop        Stop the current timetracking interval
 
 Flags:
-  -f, --file FILE     path to data FILE (default "/Users/dennis/.tt.json")
-  -h, --help          help for tt
-  -m, --month MONTH   output MONTH
+  -d, --date-format FORMAT   parse and write dates with FORMAT (default "02.01.2006")
+  -f, --file FILE             path to data FILE (default "/home/dennis/.tt.json")
+  -h, --help                 help for tt
+  -m, --month MONTH          output MONTH (default current)
+  -r, --round-to MINUTES     round to MINUTES (default 15)
+  -t, --time-format FORMAT   parse and write times with FORMAT (default "15:04")
+
+Use "tt [command] --help" for more information about a command.
 ```
 
 ## Example output
