@@ -19,10 +19,10 @@ func main() {
 	}
 
 	cfg := &cmd.Config{
-		Path:       filepath.Join(home, defaultFileName),
-		RoundTo:    15,
-		TimeFormat: "15:04",
-		DateFormat: "02.01.2006",
+		DefaultPath: filepath.Join(home, defaultFileName),
+		RoundTo:     15,
+		TimeFormat:  "15:04",
+		DateFormat:  "02.01.2006",
 	}
 
 	c := cmd.New(cfg)

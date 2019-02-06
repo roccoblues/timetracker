@@ -12,14 +12,18 @@ func New(cfg *Config) *cobra.Command {
 	rootCmd := newRootCommand(cfg)
 
 	rootCmd.Flags().IntVarP(&cfg.Month, "month", "m", 0, "output `MONTH` (default current)")
-	if !rootCmd.Flags().Changed("month") {
-		cfg.Month = int(time.Now().Month())
-	}
 
-	rootCmd.PersistentFlags().StringVarP(&cfg.Path, "file", "f", cfg.Path, "path to data `FILE`")
+	rootCmd.PersistentFlags().StringVarP(&cfg.path, "file", "f", "", "path to data `FILE` (default $HOME/.tt.json)")
 	rootCmd.PersistentFlags().IntVarP(&cfg.RoundTo, "round-to", "r", cfg.RoundTo, "round to `MINUTES`")
 	rootCmd.PersistentFlags().StringVarP(&cfg.TimeFormat, "time-format", "t", cfg.TimeFormat, "parse and write times with `FORMAT`")
 	rootCmd.PersistentFlags().StringVarP(&cfg.DateFormat, "date-format", "d", cfg.DateFormat, "parse and write dates with `FORMAT`")
+
+	if !rootCmd.Flags().Changed("month") {
+		cfg.Month = int(time.Now().Month())
+	}
+	if !rootCmd.Flags().Changed("path") {
+		cfg.path = cfg.DefaultPath
+	}
 
 	rootCmd.AddCommand(newStartCommand(cfg))
 	rootCmd.AddCommand(newStopCmd(cfg))

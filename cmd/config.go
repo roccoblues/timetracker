@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	TimeFormat string
-	DateFormat string
-	Path       string
-	Month      int
-	RoundTo    int
+	TimeFormat  string
+	DateFormat  string
+	DefaultPath string
+	Month       int
+	RoundTo     int
+	path        string
 }
 
 func (c *Config) DateTimeFormat() string {
@@ -30,7 +31,7 @@ func (c *Config) parseTime(value string) (time.Time, error) {
 }
 
 func (c *Config) loadSheet() *timesheet.Sheet {
-	f, err := os.OpenFile(c.Path, os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(c.path, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -47,7 +48,7 @@ func (c *Config) loadSheet() *timesheet.Sheet {
 }
 
 func (c *Config) saveSheet(s *timesheet.Sheet) {
-	f, err := os.Create(c.Path)
+	f, err := os.Create(c.path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
