@@ -98,8 +98,10 @@ func timeArg(args []string, cfg *Config) time.Time {
 }
 
 func parseTime(value string, cfg *Config) (time.Time, error) {
+	dateTimeFormat := fmt.Sprintf("%s %s", cfg.DateFormat, cfg.TimeFormat)
 	dateTime := fmt.Sprintf("%s %s", time.Now().Format(cfg.DateFormat), value)
-	return time.ParseInLocation(cfg.DateTimeFormat(), dateTime, time.Now().Location())
+
+	return time.ParseInLocation(dateTimeFormat, dateTime, time.Now().Location())
 }
 
 func loadSheet(cfg *Config) *timesheet.Sheet {

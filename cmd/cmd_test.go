@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestConfigParseTime(t *testing.T) {
+func TestParseTime(t *testing.T) {
 	now := time.Now()
 	cfg := &Config{
 		TimeFormat: "15:04",
@@ -33,7 +33,7 @@ func TestConfigParseTime(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := cfg.parseTime(tt.value)
+			got, err := parseTime(tt.value, cfg)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseTime() error = %v, wantErr %v", err, tt.wantErr)
 				return
