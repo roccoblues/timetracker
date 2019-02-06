@@ -1,6 +1,6 @@
 # tt [![Build Status](https://travis-ci.com/roccoblues/tt.svg?branch=master)](https://travis-ci.com/roccoblues/tt)
 
-tt is a simple command line time tracker. The times in the output are rounded to 15 minute intervals.
+tt is a simple command line time tracker.
 
 
 ## Installation
@@ -23,7 +23,7 @@ Available Commands:
 
 Flags:
   -d, --date-format FORMAT   parse and write dates with FORMAT (default "02.01.2006")
-  -f, --file FILE            path to data FILE (default $HOME/.tt.json)
+  -f, --file FILE             path to data FILE (default $HOME/.tt.json)
   -h, --help                 help for tt
   -m, --month MONTH          output MONTH (default current)
   -r, --round-to MINUTES     round to MINUTES (default 15)
