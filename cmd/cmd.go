@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/roccoblues/tt/timesheet"
 	"github.com/spf13/cobra"
 )
 
@@ -37,11 +38,10 @@ func newRootCommand(cfg *Config) *cobra.Command {
 		Use:   "tt",
 		Short: "tt is a command line time tracker",
 		Run: func(cmd *cobra.Command, args []string) {
-			s := cfg.loadSheet()
-			s.PrintMonth(time.Month(cfg.Month), cfg.RoundDuration(), os.Stdout)
+			sheet := loadSheet(cfg)
+			sheet.PrintMonth(time.Month(cfg.Month), cfg.RoundDuration(), os.Stdout)
 		},
 	}
-
 }
 
 func newStartCommand(cfg *Config) *cobra.Command {
@@ -49,27 +49,16 @@ func newStartCommand(cfg *Config) *cobra.Command {
 		Use:   "start [time]",
 		Short: "Start a new timetracking interval",
 		Run: func(cmd *cobra.Command, args []string) {
-			sheet := cfg.loadSheet()
+			sheet := loadSheet(cfg)
 
-			startTime := time.Now()
-			var err error
-
-			if len(args) > 0 {
-				startTime, err = cfg.parseTime(args[0])
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
-				}
-			}
-
-			if err := sheet.Start(startTime); err != nil {
+			if err := sheet.Start(timeArg(args, cfg)); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 
-			cfg.saveSheet(sheet)
+			sheet.PrintMonth(time.Month(cfg.Month), cfg.RoundDuration(), os.Stdout)
 
-			sheet.Print(cfg.RoundDuration(), os.Stdout)
+			saveSheet(sheet, cfg)
 		},
 	}
 }
@@ -79,27 +68,67 @@ func newStopCmd(cfg *Config) *cobra.Command {
 		Use:   "stop [time]",
 		Short: "Stop the current timetracking interval",
 		Run: func(cmd *cobra.Command, args []string) {
-			sheet := cfg.loadSheet()
+			sheet := loadSheet(cfg)
 
-			endTime := time.Now()
-			var err error
-
-			if len(args) > 0 {
-				endTime, err = cfg.parseTime(args[0])
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					os.Exit(1)
-				}
-			}
-
-			if err := sheet.End(endTime); err != nil {
+			if err := sheet.End(timeArg(args, cfg)); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 
-			cfg.saveSheet(sheet)
+			sheet.PrintMonth(time.Month(cfg.Month), cfg.RoundDuration(), os.Stdout)
 
-			sheet.Print(cfg.RoundDuration(), os.Stdout)
+			saveSheet(sheet, cfg)
 		},
+	}
+}
+
+func timeArg(args []string, cfg *Config) time.Time {
+	t := time.Now()
+	var err error
+
+	if len(args) > 0 {
+		t, err = parseTime(args[0], cfg)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+	}
+
+	return t
+}
+
+func parseTime(value string, cfg *Config) (time.Time, error) {
+	dateTime := fmt.Sprintf("%s %s", time.Now().Format(cfg.DateFormat), value)
+	return time.ParseInLocation(cfg.DateTimeFormat(), dateTime, time.Now().Location())
+}
+
+func loadSheet(cfg *Config) *timesheet.Sheet {
+	f, err := os.OpenFile(cfg.path, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	s, err := timesheet.Load(f, cfg.DateFormat, cfg.TimeFormat)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return s
+}
+
+func saveSheet(s *timesheet.Sheet, cfg *Config) {
+	f, err := os.Create(cfg.path)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	if err := s.Save(f); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
