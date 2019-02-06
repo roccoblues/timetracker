@@ -4,25 +4,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/roccoblues/tt/cmd"
 )
 
-const (
-	timeFormat      = "15:04"
-	dateFormat      = "02.01.2006"
-	roundTo         = 15 * time.Minute
-	defaultFileName = ".tt.json"
-)
+const defaultFileName = ".tt.json"
 
-var dateTimeFormat = fmt.Sprintf("%s %s", dateFormat, timeFormat)
-
-// flags
-var (
-	file  string
-	month int
-)
+// var dateTimeFormat =
 
 func main() {
 	home, err := homedir.Dir()
@@ -30,15 +19,16 @@ func main() {
 		fmt.Fprintf(os.Stderr, "[ERROR] %s\n", err)
 		os.Exit(1)
 	}
-	defaultPath := filepath.Join(home, defaultFileName)
 
-	rootCmd.PersistentFlags().StringVarP(&file, "file", "f", defaultPath, "path to data `FILE`")
-	rootCmd.Flags().IntVarP(&month, "month", "m", 0, "output `MONTH`")
+	cfg := &cmd.Config{
+		Path:       filepath.Join(home, defaultFileName),
+		RoundTo:    15,
+		TimeFormat: "15:04",
+		DateFormat: "02.01.2006",
+	}
 
-	rootCmd.AddCommand(startCmd)
-	rootCmd.AddCommand(stopCmd)
-
-	if err := rootCmd.Execute(); err != nil {
+	c := cmd.New(cfg)
+	if err := c.Execute(); err != nil {
 		os.Exit(1)
 	}
 }
