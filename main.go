@@ -48,7 +48,17 @@ func main() {
 		}
 	}
 
-	sheet := loadSheet(*flagFile, *flagDateFormat, *flagTimeFormat)
+	file, err := os.OpenFile(*flagFile, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	sheet, err := timesheet.Load(file, *flagDateFormat, *flagTimeFormat)
+	file.Close()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	if len(flag.Args()) == 0 {
 		sheet.PrintMonth(month, time.Duration(*flagRoundTo)*time.Minute, os.Stdout)
@@ -71,39 +81,18 @@ func main() {
 		}
 	}
 
-	saveSheet(sheet, *flagFile)
+	file, err = os.Create(*flagFile)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer file.Close()
+	if err := sheet.Save(file); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
 	sheet.PrintMonth(month, time.Duration(*flagRoundTo)*time.Minute, os.Stdout)
-}
-
-func loadSheet(path string, dateFormat, timeFormat string) *timesheet.Sheet {
-	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	defer f.Close()
-
-	s, err := timesheet.Load(f, dateFormat, timeFormat)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	return s
-}
-
-func saveSheet(s *timesheet.Sheet, path string) {
-	f, err := os.Create(path)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	defer f.Close()
-
-	if err := s.Save(f); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 }
 
 func parseTime(value string, dateFormat, timeFormat string) (time.Time, error) {
