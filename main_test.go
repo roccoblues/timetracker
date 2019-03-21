@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"reflect"
@@ -8,10 +8,8 @@ import (
 
 func TestParseTime(t *testing.T) {
 	now := time.Now()
-	cfg := &Config{
-		TimeFormat: "15:04",
-		DateFormat: "02.01.2006",
-	}
+	timeFormat := "15:04"
+	dateFormat := "02.01.2006"
 
 	tests := []struct {
 		name    string
@@ -33,7 +31,7 @@ func TestParseTime(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseTime(tt.value, cfg)
+			got, err := parseTime(tt.value, dateFormat, timeFormat)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseTime() error = %v, wantErr %v", err, tt.wantErr)
 				return
