@@ -60,36 +60,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	if len(flag.Args()) == 0 {
-		sheet.PrintMonth(month, time.Duration(*flagRoundTo)*time.Minute, os.Stdout)
-		os.Exit(0)
-	}
+	if len(flag.Args()) != 0 {
+		switch flag.Arg(0) {
+		default:
+			fmt.Fprintf(os.Stderr, "%s: unknown command '%s'\n", os.Args[0], flag.Arg(0))
+			os.Exit(1)
+		case "start":
+			if err := sheet.Start(timeArg); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		case "stop":
+			if err := sheet.End(timeArg); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+		}
 
-	switch flag.Arg(0) {
-	default:
-		fmt.Fprintf(os.Stderr, "%s: unknown command '%s'\n", os.Args[0], flag.Arg(0))
-		os.Exit(1)
-	case "start":
-		if err := sheet.Start(timeArg); err != nil {
+		file, err = os.Create(*flagFile)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-	case "stop":
-		if err := sheet.End(timeArg); err != nil {
+		defer file.Close()
+		if err := sheet.Save(file); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-	}
-
-	file, err = os.Create(*flagFile)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	defer file.Close()
-	if err := sheet.Save(file); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
 	}
 
 	sheet.PrintMonth(month, time.Duration(*flagRoundTo)*time.Minute, os.Stdout)
