@@ -50,7 +50,7 @@ func (s *Sheet) Start(start time.Time) error {
 	}
 
 	if start.Before(last) {
-		return fmt.Errorf("start time %s is ealier as last end time %s", start.Format(s.TimeFormat), last.Format(s.TimeFormat))
+		return fmt.Errorf("start time %s is earlier as last end time %s", start.Format(s.TimeFormat), last.Format(s.TimeFormat))
 	}
 
 	s.Times = append(s.Times, start)

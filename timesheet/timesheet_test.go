@@ -162,7 +162,7 @@ func Test_timeSheet_End(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "end ealier as start",
+			name: "end earlier as start",
 			end:  time.Date(2018, time.September, 1, 8, 0, 0, 0, time.Now().Location()),
 			before: []time.Time{
 				time.Date(2018, time.September, 1, 9, 0, 0, 0, time.Now().Location()),
