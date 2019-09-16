@@ -1,4 +1,4 @@
-# tt [![Build Status](https://travis-ci.com/roccoblues/tt.svg?branch=master)](https://travis-ci.com/roccoblues/tt)
+# tt ![](https://github.com/roccoblues/tt/workflows/Go/badge.svg)
 
 tt is a simple command line time tracker.
 
