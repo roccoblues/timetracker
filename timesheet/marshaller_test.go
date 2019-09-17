@@ -126,7 +126,7 @@ func TestMarshal(t *testing.T) {
 			var actual bytes.Buffer
 			marshal(&actual, tc.times, dateFormat, timeFormat)
 
-			if diff := cmp.Diff(strings.Trim(string(want), "\n\r"), strings.Trim(actual.String(), "\r\n")); diff != "" {
+			if diff := cmp.Diff(strings.Replace(string(want), "\r\n", "\n", -1), strings.Replace(actual.String(), "\r\n", "\n", -1)); diff != "" {
 				t.Errorf("marshal() differs: (-want +got)\n%s", diff)
 			}
 		})
