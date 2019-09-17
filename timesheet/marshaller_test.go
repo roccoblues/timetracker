@@ -3,6 +3,7 @@ package timesheet
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -125,7 +126,7 @@ func TestMarshal(t *testing.T) {
 			var actual bytes.Buffer
 			marshal(&actual, tc.times, dateFormat, timeFormat)
 
-			if diff := cmp.Diff(string(want), actual.String()); diff != "" {
+			if diff := cmp.Diff(strings.TrimSpace(string(want)), strings.TrimSpace(actual.String())); diff != "" {
 				t.Errorf("marshal() differs: (-want +got)\n%s", diff)
 			}
 		})
