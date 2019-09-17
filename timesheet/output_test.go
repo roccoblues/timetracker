@@ -2,6 +2,7 @@ package timesheet
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 
@@ -56,7 +57,7 @@ func TestPrint(t *testing.T) {
 			print(tc.times, 15*time.Minute, dateFormat, timeFormat, output)
 
 			want := string(readFile(t, tc.fixture))
-			if diff := cmp.Diff(want, output.String()); diff != "" {
+			if diff := cmp.Diff(strings.Replace(want, "\r\n", "\n", -1), strings.Replace(output.String(), "\r\n", "\n", -1)); diff != "" {
 				t.Errorf("Print() differs: (-want +got)\n%s", diff)
 			}
 		})
