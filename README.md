@@ -1,4 +1,4 @@
-# tt ![](https://github.com/roccoblues/tt/workflows/Go/badge.svg)
+# tt ![](https://github.com/roccoblues/tt/workflows/Test/badge.svg)
 
 tt is a simple command line time tracker.
 
