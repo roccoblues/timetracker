@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         go-version: [1.12.x, 1.13.x]
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
 
     steps:
@@ -17,14 +17,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v1
-
-      - name: Cache modules
-        uses: actions/cache@v1
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
       - name: Test
         run: go test -v -parallel 4 -race ./...
