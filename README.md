@@ -1,7 +1,6 @@
-# tt ![](https://github.com/roccoblues/tt/workflows/Test/badge.svg)
+# tt [![Build Status](https://github.com/roccoblues/tt/workflows/Test/badge.svg)](https://github.com/roccoblues/tt/actions)
 
 tt is a simple command line time tracker.
-
 
 ## Installation
 
