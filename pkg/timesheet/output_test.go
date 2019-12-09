@@ -17,7 +17,7 @@ var outputTestCases = []struct {
 	{
 		description: "empty",
 		times:       []time.Time{},
-		fixture:     "test-fixtures/output_empty.txt",
+		fixture:     "testdata/output_empty.txt",
 	},
 	{
 		description: "august",
@@ -25,7 +25,7 @@ var outputTestCases = []struct {
 			time.Date(2018, time.August, 28, 8, 0, 0, 0, time.Now().Location()),
 			time.Date(2018, time.August, 28, 12, 0, 0, 0, time.Now().Location()),
 		},
-		fixture: "test-fixtures/output_august.txt",
+		fixture: "testdata/output_august.txt",
 	},
 	{
 		description: "september",
@@ -42,7 +42,7 @@ var outputTestCases = []struct {
 			time.Date(2018, time.September, 9, 13, 12, 0, 0, time.Now().Location()),
 			time.Date(2018, time.September, 9, 17, 57, 0, 0, time.Now().Location()),
 		},
-		fixture: "test-fixtures/output_september.txt",
+		fixture: "testdata/output_september.txt",
 	},
 }
 

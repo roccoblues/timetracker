@@ -11,19 +11,18 @@ go get github.com/roccoblues/tt
 ## Usage
 
 ```
-Usage:
-  tt [flags] [command] [time]
+Usage: ./tt [flags] [start|stop] [time]
 
-Available Commands:
-  start       Start a new timetracking interval
-  stop        Stop the current timetracking interval
-
-Flags:
-  -date-format string   parse and write dates with format (default "02.01.2006")
-  -file string          path to data file (default "$HOME/.tt.json")
-  -month int            output month (default current)
-  -round-to int         round to minutes (default 15)
-  -time-format string   parse and write times with format (default "15:04")
+  -date-format string
+    	parse and write dates with format (default "02.01.2006")
+  -file string
+    	path to data file (default "$HOME/.tt.json")
+  -month int
+    	output month (default current)
+  -round-to int
+    	round to minutes (default 15)
+  -time-format string
+    	parse and write times with format (default "15:04")
 ```
 
 ## Example output

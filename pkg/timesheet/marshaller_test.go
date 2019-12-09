@@ -19,52 +19,52 @@ var marshalTestCases = []struct {
 }{
 	{
 		description: "invalid json",
-		fixture:     "test-fixtures/invalid.json",
+		fixture:     "testdata/invalid.json",
 		times:       nil,
 		wantErr:     true,
 		skipMarshal: true,
 	},
 	{
 		description: "invalid date",
-		fixture:     "test-fixtures/invalid_date.json",
+		fixture:     "testdata/invalid_date.json",
 		times:       nil,
 		wantErr:     true,
 		skipMarshal: true,
 	},
 	{
 		description: "invalid time",
-		fixture:     "test-fixtures/invalid_time.json",
+		fixture:     "testdata/invalid_time.json",
 		times:       nil,
 		wantErr:     true,
 		skipMarshal: true,
 	},
 	{
 		description: "empty file",
-		fixture:     "test-fixtures/empty.json",
+		fixture:     "testdata/empty.json",
 		skipMarshal: true,
 		times:       nil,
 	},
 	{
 		description: "empty json",
-		fixture:     "test-fixtures/empty_json.json",
+		fixture:     "testdata/empty_json.json",
 		times:       nil,
 	},
 	{
 		description: "empty day",
-		fixture:     "test-fixtures/empty_day.json",
+		fixture:     "testdata/empty_day.json",
 		times:       nil,
 		skipMarshal: true,
 	},
 	{
 		description: "one day only start",
-		fixture:     "test-fixtures/one_day_only_start.json",
+		fixture:     "testdata/one_day_only_start.json",
 		times: []time.Time{
 			time.Date(2018, time.September, 1, 10, 0, 0, 0, time.Now().Location()),
 		},
 	},
 	{
 		description: "one day start/end",
-		fixture:     "test-fixtures/one_day_start_end.json",
+		fixture:     "testdata/one_day_start_end.json",
 		times: []time.Time{
 			time.Date(2018, time.September, 1, 10, 0, 0, 0, time.Now().Location()),
 			time.Date(2018, time.September, 1, 12, 0, 0, 0, time.Now().Location()),
@@ -72,7 +72,7 @@ var marshalTestCases = []struct {
 	},
 	{
 		description: "one day start/end start",
-		fixture:     "test-fixtures/one_day_start_end_start.json",
+		fixture:     "testdata/one_day_start_end_start.json",
 		times: []time.Time{
 			time.Date(2018, time.September, 1, 10, 0, 0, 0, time.Now().Location()),
 			time.Date(2018, time.September, 1, 12, 0, 0, 0, time.Now().Location()),
@@ -81,7 +81,7 @@ var marshalTestCases = []struct {
 	},
 	{
 		description: "multiple days",
-		fixture:     "test-fixtures/multiple_days.json",
+		fixture:     "testdata/multiple_days.json",
 		times: []time.Time{
 			time.Date(2018, time.September, 1, 10, 0, 0, 0, time.Now().Location()),
 			time.Date(2018, time.September, 1, 12, 0, 0, 0, time.Now().Location()),
